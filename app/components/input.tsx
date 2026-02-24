@@ -1,6 +1,6 @@
 "use client";
 import { useErrorStore, useFeedbackStore } from "@/store/store";
-import { GENLAYER_CONFIG, DICTIONARY_METHODS, DICTIONARY_CONFIG } from "@/constants/genlayer_config";
+import { GENLAYER_CONFIG, POLICY_METHODS, POLICY_CONFIG } from "@/constants/genlayer_config";
 import { useWallet } from "@/app/context/WalletContext";
 import React, { useState } from "react";
 import { createClient } from 'genlayer-js';
@@ -8,7 +8,7 @@ import { studionet } from 'genlayer-js/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 
 const Input = () => {
-  const [word, setWord] = useState("");
+  const [policyText, setPolicyText] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
   const { account, walletType } = useWallet();
@@ -37,7 +37,7 @@ const Input = () => {
     return client;
   };
 
-  const analyzeWord = async (wordOrPhrase: string) => {
+  const analyzePolicy = async (policy: string) => {
     try {
       const client = await getClient();
       if (!client) throw new Error("Client initialization failed");
@@ -51,13 +51,13 @@ const Input = () => {
       
       const txHash = await client.writeContract({
         address: address as `0x${string}`,
-        functionName: DICTIONARY_METHODS.ANALYZE_WORD,
-        args: [wordOrPhrase],
+        functionName: POLICY_METHODS.ANALYZE_POLICY,
+        args: [policy],
         value: 0n,
       });
 
       console.log("Transaction submitted:", txHash);
-      setStatus("Processing analysis (this may take 30-60 seconds)...");
+      setStatus("Processing risk assessment (this may take 30-60 seconds)...");
       
       let receipt;
       try {
@@ -83,7 +83,7 @@ const Input = () => {
       // Get the latest analysis ID
       const latestAnalysisId = await client.readContract({
         address: address as `0x${string}`,
-        functionName: DICTIONARY_METHODS.GET_LATEST_ANALYSIS_ID,
+        functionName: POLICY_METHODS.GET_LATEST_ANALYSIS_ID,
         args: [],
       }) as string;
       
@@ -96,7 +96,7 @@ const Input = () => {
       // Fetch the analysis result
       const analysisResult = await client.readContract({
         address: address as `0x${string}`,
-        functionName: DICTIONARY_METHODS.GET_ANALYSIS,
+        functionName: POLICY_METHODS.GET_ANALYSIS,
         args: [latestAnalysisId],
       }) as Record<string, unknown>;
 
@@ -114,27 +114,54 @@ const Input = () => {
       console.log("Analysis result (converted):", result);
 
       // Extract values with fallbacks
-      const overview = String(result.overview || "");
-      const keyPoints = Array.isArray(result.key_points) 
-        ? result.key_points.map((p: string) => ({ comment: String(p) }))
-        : [];
-      const bestPractices = Array.isArray(result.best_practices)
-        ? result.best_practices.map((p: string) => ({ comment: String(p) }))
-        : [];
-      const warnings = Array.isArray(result.warnings)
-        ? result.warnings.map((w: string) => String(w))
-        : [];
-      const summary = String(result.summary || "");
+      const riskScore = Number(result.risk_score ?? result.riskScore ?? 0);
+      const riskLevel = String(result.risk_level ?? result.riskLevel ?? "Unknown");
+      const summary = String(result.summary ?? result.overview ?? "");
 
-      console.log("Parsed data:", { overview, keyPoints, bestPractices, warnings, summary });
+      const riskyClausesRaw = result.risky_clauses ?? result.riskyClauses ?? [];
+      const riskyClauses = Array.isArray(riskyClausesRaw)
+        ? riskyClausesRaw.map((item: unknown) => {
+            if (typeof item === "string") {
+              return { clause: item, risk: "Medium", reason: "" };
+            }
+            if (item && typeof item === "object") {
+              const record = item as Record<string, unknown>;
+              return {
+                clause: String(record.clause ?? record.text ?? record.snippet ?? ""),
+                risk: String(record.risk ?? record.level ?? "Medium"),
+                reason: String(record.reason ?? record.rationale ?? ""),
+              };
+            }
+            return { clause: String(item), risk: "Medium", reason: "" };
+          })
+        : [];
+
+      const plainEnglishRaw = result.plain_english ?? result.plainEnglish ?? [];
+      const plainEnglish = Array.isArray(plainEnglishRaw)
+        ? plainEnglishRaw.map((p: unknown) => String(p))
+        : [String(plainEnglishRaw)];
+
+      const complianceRaw = result.compliance_flags ?? result.complianceFlags ?? [];
+      const complianceFlags = Array.isArray(complianceRaw)
+        ? complianceRaw.map((c: unknown) => String(c))
+        : [String(complianceRaw)];
+
+      const recommendationsRaw = result.recommendations ?? result.actions ?? [];
+      const recommendations = Array.isArray(recommendationsRaw)
+        ? recommendationsRaw.map((r: unknown) => String(r))
+        : [String(recommendationsRaw)];
+
+      console.log("Parsed data:", { riskScore, riskLevel, summary, riskyClauses, plainEnglish, complianceFlags, recommendations });
 
       // Update store
       useFeedbackStore.setState({
-        overview,
-        keyPoints,
-        bestPractices,
-        warnings,
+        riskScore,
+        riskLevel,
         summary,
+        riskyClauses,
+        plainEnglish,
+        complianceFlags,
+        recommendations,
       });
 
       useErrorStore.getState().clearError();
@@ -143,7 +170,7 @@ const Input = () => {
     } catch (err: unknown) {
       console.error("Analysis Error:", err);
       useErrorStore.getState().setError(
-        (err instanceof Error ? err.message : String(err)) || "Word analysis failed"
+        (err instanceof Error ? err.message : String(err)) || "Policy analysis failed"
       );
     }
   };
@@ -158,26 +185,26 @@ const Input = () => {
       return;
     }
 
-    const trimmedWord = word.trim();
-    if (!trimmedWord) {
-      useErrorStore.getState().setError("Please enter a word or phrase");
+    const trimmedPolicy = policyText.trim();
+    if (!trimmedPolicy) {
+      useErrorStore.getState().setError("Please paste a policy or terms text");
       return;
     }
 
-    if (trimmedWord.length > DICTIONARY_CONFIG.MAX_CHARS) {
-      useErrorStore.getState().setError(`Input must be under ${DICTIONARY_CONFIG.MAX_CHARS} characters`);
+    if (trimmedPolicy.length > POLICY_CONFIG.MAX_CHARS) {
+      useErrorStore.getState().setError(`Input must be under ${POLICY_CONFIG.MAX_CHARS} characters`);
       return;
     }
 
     try {
       setLoading(true);
-      await analyzeWord(trimmedWord);
+      await analyzePolicy(trimmedPolicy);
     } catch (error) {
       console.error(error);
       useErrorStore.getState().setError("Analysis failed. See console.");
     } finally {
       setLoading(false);
-      setWord("");
+      setPolicyText("");
       setStatus("");
     }
   };
@@ -185,18 +212,16 @@ const Input = () => {
   return (
     <div className="w-full h-full flex flex-col">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-card-border/50">
-        <h3 className="font-semibold text-text-main flex items-center gap-2">
-          <span className="text-transparent bg-gradient-to-r from-accent-primary to-accent-tertiary bg-clip-text">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C6.248 6.253 2 10.5 2 15.5S6.248 24.747 12 24.747s10-4.747 10-10.247S17.752 6.253 12 6.253z" />
-            </svg>
-          </span>
-          Input Analysis
-        </h3>
-        <p className="text-xs text-text-muted mt-1">
-          Enter any word or phrase to get detailed lexicographic analysis powered by decentralized AI.
-        </p>
+      <div className="px-6 py-5 border-b border-card-border/60">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-text-main tracking-tight">Policy Intake</h3>
+            <p className="text-xs text-text-muted mt-1">
+              Paste terms, privacy, or compliance language for decentralized risk analysis.
+            </p>
+          </div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-text-muted/80">GenLayer</div>
+        </div>
       </div>
 
       {/* Form Body */}
@@ -206,36 +231,36 @@ const Input = () => {
           className="w-full h-full flex flex-col gap-4"
         >
           <div className="flex-1 relative group">
-            <label className="text-xs font-semibold text-text-muted mb-2 block uppercase tracking-wider">Word or Phrase</label>
+            <label className="text-xs font-semibold text-text-muted mb-2 block uppercase tracking-wider">Policy Text</label>
             <textarea
               disabled={loading}
-              onChange={(e) => setWord(e.target.value)}
-              value={word}
-              placeholder={loading ? status : "Enter a word or phrase to analyze..."}
-              className="w-full h-full min-h-[200px] p-4 premium-input bg-card-dark resize-none focus:ring-1 focus:ring-accent-primary/50"
+              onChange={(e) => setPolicyText(e.target.value)}
+              value={policyText}
+              placeholder={loading ? status : "Paste your policy, privacy notice, or terms here..."}
+              className="w-full h-full min-h-[260px] p-4 premium-input bg-card-dark resize-none focus:ring-1 focus:ring-accent-primary/50"
             />
             <div className="absolute bottom-4 right-4 text-xs text-text-muted/60">
-              {word.length} / {DICTIONARY_CONFIG.MAX_CHARS}
+              {policyText.length} / {POLICY_CONFIG.MAX_CHARS}
             </div>
           </div>
 
-          <div className="mt-auto pt-4 border-t border-card-border/50 flex justify-between items-center gap-4">
+          <div className="mt-auto pt-4 border-t border-card-border/60 flex justify-between items-center gap-4">
             <div className="text-xs text-text-muted">
-              Cost: <span className="text-accent-secondary font-mono font-semibold">~0.005 GEN</span>
+              Estimated cost: <span className="text-accent-secondary font-mono font-semibold">~0.01 GEN</span>
             </div>
             <button
               type="submit"
-              disabled={loading || !word.trim() || !account}
+              disabled={loading || !policyText.trim() || !account}
               className="premium-btn px-6 py-3 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
             >
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Analyzing...</span>
+                  <span>Assessing Risk...</span>
                 </>
               ) : (
                 <>
-                  <span>Analyze</span>
+                  <span>Run Analysis</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>

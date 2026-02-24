@@ -1,12 +1,17 @@
 import { z } from 'zod';
-import { useErrorStore, useFeedbackStore } from '@/store/store';
 
-export const feedbackSchema = z.object({
-  overview: z.string(),
-  keyPoints: z.array(z.object({ comment: z.string() })),
-  bestPractices: z.array(z.object({ comment: z.string() })),
-  warnings: z.array(z.string()),
+export const policySchema = z.object({
+  riskScore: z.number(),
+  riskLevel: z.string(),
   summary: z.string(),
+  riskyClauses: z.array(z.object({
+    clause: z.string(),
+    risk: z.string(),
+    reason: z.string().optional(),
+  })),
+  plainEnglish: z.array(z.string()),
+  complianceFlags: z.array(z.string()),
+  recommendations: z.array(z.string()),
 });
 
 

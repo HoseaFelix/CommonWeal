@@ -1,19 +1,24 @@
-import { feedbackSchema } from "@/constants/constant";
+import { z } from "zod";
+import { policySchema } from "@/constants/constant";
 
-type Feedback = z.infer<typeof feedbackSchema>;
+export type PolicyFeedback = z.infer<typeof policySchema>;
 
 // types/feedback.d.ts or types/feedback.ts
 
-export interface FeedbackComment {
-  comment: string
+export interface RiskyClause {
+  clause: string
+  risk: string
+  reason?: string
 }
 
-export interface FeedbackData {
-  overview: string
-  keyPoints: FeedbackComment[]
-  bestPractices: FeedbackComment[]
-  warnings: string[]
+export interface PolicyData {
+  riskScore: number
+  riskLevel: string
   summary: string
+  riskyClauses: RiskyClause[]
+  plainEnglish: string[]
+  complianceFlags: string[]
+  recommendations: string[]
 }
 
 export interface FeedbackErrorState {

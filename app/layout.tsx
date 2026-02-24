@@ -1,21 +1,26 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "./context/WalletContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const displayFont = Fraunces({
+  variable: "--font-display",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const bodyFont = Space_Grotesk({
+  variable: "--font-body",
+  subsets: ["latin"],
+});
+
+const monoFont = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "AI Dictionary - Decentralized Lexicographic Analysis",
-  description: "An expert lexicographer powered by GenLayer's decentralized AI consensus for comprehensive word and phrase analysis.",
+  title: "Policy Risk Analyzer - GenLayer Consensus",
+  description: "Assess policy and terms language with GenLayer's decentralized AI consensus. Structured risk scores, clause detection, and compliance flags.",
 };
 
 export default function RootLayout({
@@ -25,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" data-theme='dark'>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-mona-sans bg-bg-dark text-text-main`}>
+      <body className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} antialiased font-body bg-bg-dark text-text-main`}>
         <WalletProvider>
           {children}
         </WalletProvider>

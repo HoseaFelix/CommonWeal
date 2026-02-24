@@ -1,5 +1,5 @@
 import {create} from "zustand"
-import { Feedback } from "../types"
+import { PolicyFeedback } from "../types"
 
 
 type errorState = {
@@ -8,16 +8,20 @@ type errorState = {
     clearError: () => void;
 }
 
-export interface FeedbackComment {
-    comment: string
+export interface RiskyClause {
+    clause: string
+    risk: string
+    reason?: string
   }
   
-  export interface FeedbackData {
-    overview: string
-    keyPoints: FeedbackComment[]
-    bestPractices: FeedbackComment[]
-    warnings: string[]
+  export interface PolicyData {
+    riskScore: number
+    riskLevel: string
     summary: string
+    riskyClauses: RiskyClause[]
+    plainEnglish: string[]
+    complianceFlags: string[]
+    recommendations: string[]
   }
   
   export interface FeedbackErrorState {
@@ -27,14 +31,14 @@ export interface FeedbackComment {
 
 
 
-export const useFeedbackStore =create<Feedback>(()=>({
-    overview: "",
-    keyPoints: [],
-    bestPractices: [],
-    warnings: [],
-    summary: ""
-
-
+export const useFeedbackStore =create<PolicyFeedback>(()=>({
+    riskScore: 0,
+    riskLevel: "",
+    summary: "",
+    riskyClauses: [],
+    plainEnglish: [],
+    complianceFlags: [],
+    recommendations: [],
 }))
 
 export const useErrorStore = create<errorState>((set)=>({

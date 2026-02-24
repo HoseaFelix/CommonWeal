@@ -1,25 +1,34 @@
 'use client'
 
 import { useFeedbackStore, useErrorStore } from '@/store/store'
-import { FeedbackData } from '@/types'
+import { PolicyData } from '@/types'
 import React from 'react'
 
 const AnimatedContent = () => {
   const { error } = useErrorStore()
   const {
-    overview,
-    keyPoints,
-    bestPractices,
-    warnings,
+    riskScore,
+    riskLevel,
     summary,
-  } = useFeedbackStore() as FeedbackData
+    riskyClauses,
+    plainEnglish,
+    complianceFlags,
+    recommendations,
+  } = useFeedbackStore() as PolicyData
 
   const hasFeedback =
-    overview.trim() !== '' ||
-    keyPoints.length > 0 ||
-    bestPractices.length > 0 ||
-    warnings.length > 0 ||
-    summary.trim() !== ''
+    summary.trim() !== '' ||
+    riskyClauses.length > 0 ||
+    plainEnglish.length > 0 ||
+    complianceFlags.length > 0 ||
+    recommendations.length > 0 ||
+    riskScore > 0
+
+  const safeScore = Number.isFinite(riskScore) ? riskScore : 0
+  const scoreColor =
+    safeScore >= 75 ? 'text-destructive' :
+    safeScore >= 45 ? 'text-warning' :
+    'text-success'
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -31,7 +40,7 @@ const AnimatedContent = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C6.248 6.253 2 10.5 2 15.5S6.248 24.747 12 24.747s10-4.747 10-10.247S17.752 6.253 12 6.253z" />
             </svg>
           </div>
-          <h3 className="font-semibold text-text-main">Results</h3>
+          <h3 className="font-semibold text-text-main">Risk Report</h3>
         </div>
         {!hasFeedback && <span className="text-xs text-text-muted/70 px-3 py-1.5 rounded-full bg-card-dark border border-card-border/30 font-medium">Waiting for input</span>}
       </div>
@@ -47,114 +56,98 @@ const AnimatedContent = () => {
         )}
 
         {!hasFeedback && !error && (
-          <div className="h-full flex flex-col items-center justify-center text-text-muted/50 space-y-4">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-accent-primary/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="w-20 h-20 rounded-2xl bg-card-dark border border-card-border flex items-center justify-center relative z-10 shadow-xl">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C6.248 6.253 2 10.5 2 15.5S6.248 24.747 12 24.747s10-4.747 10-10.247S17.752 6.253 12 6.253z" />
-                </svg>
-              </div>
+          <div className="h-full flex flex-col items-center justify-center text-text-muted/60 space-y-4">
+            <div className="w-20 h-20 rounded-2xl bg-card-dark border border-card-border flex items-center justify-center shadow-xl">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C6.248 6.253 2 10.5 2 15.5S6.248 24.747 12 24.747s10-4.747 10-10.247S17.752 6.253 12 6.253z" />
+              </svg>
             </div>
-            <div className="space-y-4 text-center">
-              <div className="inline-block">
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-accent-primary/20 to-accent-tertiary/10 border border-card-border/30 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-text-muted/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C6.248 6.253 2 10.5 2 15.5S6.248 24.747 12 24.747s10-4.747 10-10.247S17.752 6.253 12 6.253z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="max-w-xs">
-                <h4 className="text-lg font-semibold text-text-main mb-1">Ready for Analysis</h4>
-                <p className="text-sm text-text-muted">Submit a word or phrase on the left to discover detailed insights.</p>
-              </div>
+            <div className="space-y-2 text-center max-w-sm">
+              <h4 className="text-lg font-semibold text-text-main">Risk Analysis Ready</h4>
+              <p className="text-sm text-text-muted">Run a policy through GenLayer consensus to surface risks and compliance gaps.</p>
             </div>
           </div>
         )}
 
         {hasFeedback && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Analysis Stats */}
-            <div className="grid grid-cols-3 gap-3 pb-6 border-b border-card-border/30">
-              <div className="p-3.5 rounded-xl bg-gradient-to-br from-accent-primary/15 to-accent-primary/5 border border-accent-primary/20">
-                <div className="text-2xl font-black text-accent-primary">{keyPoints.length}</div>
-                <div className="text-[9px] uppercase tracking-widest text-text-muted mt-2 font-semibold">Key Points</div>
+            {/* Snapshot */}
+            <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-5 pb-6 border-b border-card-border/30">
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-card-dark/80 to-bg-dark/40 border border-card-border/40 flex flex-col justify-between">
+                <div className="text-xs uppercase tracking-widest text-text-muted">Risk Score</div>
+                <div className={`text-4xl font-black ${scoreColor}`}>{Math.round(safeScore)}</div>
+                <div className="text-xs text-text-muted">Risk Level</div>
+                <div className="text-sm font-semibold text-text-main">{riskLevel || "Unclassified"}</div>
               </div>
-              <div className="p-3.5 rounded-xl bg-gradient-to-br from-accent-secondary/15 to-accent-secondary/5 border border-accent-secondary/20">
-                <div className="text-2xl font-black text-accent-secondary">{bestPractices.length}</div>
-                <div className="text-[9px] uppercase tracking-widest text-text-muted mt-2 font-semibold">Best Practices</div>
-              </div>
-              <div className="p-3.5 rounded-xl bg-gradient-to-br from-accent-tertiary/15 to-accent-tertiary/5 border border-accent-tertiary/20">
-                <div className="text-2xl font-black text-accent-tertiary">{warnings.length}</div>
-                <div className="text-[9px] uppercase tracking-widest text-text-muted mt-2 font-semibold">Warnings</div>
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-card-dark/70 to-bg-dark/30 border border-card-border/40">
+                <div className="text-xs uppercase tracking-widest text-text-muted mb-2">Executive Summary</div>
+                <p className="text-sm text-text-main leading-relaxed">{summary}</p>
               </div>
             </div>
 
-            {/* Overview */}
-            <div className="space-y-2.5">
-              <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Overview</h2>
-              <p className="text-sm text-text-main leading-relaxed bg-gradient-to-br from-card-dark/50 to-bg-dark/30 p-4 rounded-lg border border-card-border/30 hover:border-accent-primary/20 transition-colors">
-                {overview}
-              </p>
-            </div>
-
-            {/* Key Points */}
-            {keyPoints.length > 0 && (
+            {/* Risky Clauses */}
+            {riskyClauses.length > 0 && (
               <div className="space-y-3">
-                <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Key Points</h2>
-                <div className="grid gap-2">
-                  {keyPoints.map((item, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3.5 rounded-lg bg-gradient-to-r from-accent-primary/5 to-transparent border border-accent-primary/20 hover:border-accent-primary/40 transition-colors group">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-accent-primary text-white flex items-center justify-center text-xs font-bold mt-0.5">{index + 1}</span>
-                      <span className="text-sm text-text-main group-hover:text-accent-primary/90 transition-colors">{item.comment}</span>
+                <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Risky Clauses</h2>
+                <div className="grid gap-3">
+                  {riskyClauses.map((item, index) => (
+                    <div key={index} className="p-4 rounded-xl bg-gradient-to-r from-destructive/5 to-transparent border border-destructive/20 hover:border-destructive/40 transition-colors">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs uppercase tracking-widest text-text-muted">Clause {index + 1}</span>
+                        <span className="text-[10px] px-2 py-1 rounded-full bg-destructive/10 text-destructive uppercase tracking-widest">{item.risk}</span>
+                      </div>
+                      <p className="text-sm text-text-main leading-relaxed">{item.clause}</p>
+                      {item.reason && (
+                        <p className="text-xs text-text-muted mt-2">Reason: {item.reason}</p>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Best Practices */}
-            {bestPractices.length > 0 && (
+            {/* Plain English */}
+            {plainEnglish.length > 0 && (
               <div className="space-y-3">
-                <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Best Practices</h2>
+                <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Plain English</h2>
                 <div className="space-y-2">
-                  {bestPractices.map((item, index) => (
-                    <div key={index} className="flex items-start gap-2 text-sm p-3.5 rounded-lg bg-gradient-to-r from-accent-secondary/5 to-transparent border border-accent-secondary/20 hover:border-accent-secondary/40 transition-colors group">
-                      <svg className="w-5 h-5 text-accent-secondary flex-shrink-0 mt-0 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-text-main group-hover:text-accent-secondary/90 transition-colors">{item.comment}</span>
+                  {plainEnglish.map((item, index) => (
+                    <div key={index} className="p-3 rounded-lg bg-gradient-to-r from-accent-secondary/10 to-transparent border border-accent-secondary/30">
+                      <p className="text-sm text-text-main">{item}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Warnings */}
-            {warnings.length > 0 && (
+            {/* Compliance Flags */}
+            {complianceFlags.length > 0 && (
               <div className="space-y-3">
-                <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Warnings</h2>
-                <div className="space-y-2">
-                  {warnings.map((warning, index) => (
-                    <div key={index} className="flex items-start gap-2.5 text-sm p-3.5 rounded-lg bg-gradient-to-r from-destructive/5 to-transparent border border-destructive/20 hover:border-destructive/40 transition-colors group">
-                      <svg className="w-5 h-5 text-destructive flex-shrink-0 mt-0 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-text-main group-hover:text-destructive/90 transition-colors">{warning}</span>
-                    </div>
+                <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Compliance Flags</h2>
+                <div className="flex flex-wrap gap-2">
+                  {complianceFlags.map((flag, index) => (
+                    <span key={index} className="text-[11px] px-3 py-1 rounded-full border border-card-border/60 bg-card-dark/60 text-text-main">
+                      {flag}
+                    </span>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Summary */}
-            <div className="space-y-2.5 pt-4 border-t border-card-border/30">
-              <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Definition</h2>
-              <p className="text-sm text-text-main italic leading-relaxed p-4 rounded-lg bg-gradient-to-br from-card-dark/30 to-bg-dark/20 border border-card-border/30 hover:border-accent-tertiary/20 transition-colors">
-                &quot;{summary}&quot;
-              </p>
-            </div>
-
+            {/* Recommendations */}
+            {recommendations.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">Recommendations</h2>
+                <div className="space-y-2">
+                  {recommendations.map((rec, index) => (
+                    <div key={index} className="flex items-start gap-2 text-sm p-3.5 rounded-lg bg-gradient-to-r from-accent-tertiary/10 to-transparent border border-accent-tertiary/30">
+                      <span className="mt-0.5 text-accent-tertiary">•</span>
+                      <span className="text-text-main">{rec}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
