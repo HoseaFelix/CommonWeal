@@ -2,22 +2,22 @@
 
 @theme {
   /* Success & Error */
-  --color-success: #22c55e;
-  --color-destructive: #ef4444;
-  --color-warning: #f59e0b;
+  --color-success: #00ff88;
+  --color-destructive: #ff4444;
+  --color-warning: #ffaa00;
 
-  /* Deep Ink Palette */
-  --color-bg-dark: #0a0f14;
-  --color-card-dark: #111821;
-  --color-card-border: #1f2a38;
-  --color-text-main: #e7edf5;
-  --color-text-muted: #8fa0b3;
+  /* Cyberpunk Neon Palette */
+  --color-bg-dark: #0a0a0a;
+  --color-card-dark: #141414;
+  --color-card-border: #2a2a2a;
+  --color-text-main: #ffffff;
+  --color-text-muted: #a0a0a0;
 
-  /* Accents - Gold, Teal, Ice */
-  --color-accent-primary: #e2b659;
-  --color-accent-hover: #f1d48c;
-  --color-accent-secondary: #56c6b7;
-  --color-accent-tertiary: #9bd1ff;
+  /* Accents - Neon Green, Pink, Blue */
+  --color-accent-primary: #00ff88;
+  --color-accent-hover: #33ffaa;
+  --color-accent-secondary: #ff0080;
+  --color-accent-tertiary: #0088ff;
 }
 
 @layer components {
@@ -57,7 +57,8 @@
 body {
   background-color: var(--color-bg-dark);
   color: var(--color-text-main);
-  background-image: radial-gradient(circle at 20% 20%, rgba(226, 182, 89, 0.08) 0%, transparent 45%),
-                    radial-gradient(circle at 80% 70%, rgba(86, 198, 183, 0.08) 0%, transparent 45%);
+  background-image: radial-gradient(circle at 20% 20%, rgba(0, 255, 136, 0.08) 0%, transparent 45%),
+                    radial-gradient(circle at 80% 70%, rgba(255, 0, 128, 0.08) 0%, transparent 45%),
+                    radial-gradient(circle at 50% 50%, rgba(0, 136, 255, 0.05) 0%, transparent 50%);
 }
 

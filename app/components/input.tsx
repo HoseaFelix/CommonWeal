@@ -165,7 +165,7 @@ const Input = () => {
       });
 
       useErrorStore.getState().clearError();
-      setStatus("Done ✅");
+      setStatus("Analysis Complete");
 
     } catch (err: unknown) {
       console.error("Analysis Error:", err);

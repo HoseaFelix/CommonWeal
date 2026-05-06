@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
-import { Fraunces, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Audiowide, Exo_2, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "./context/WalletContext";
 import { WagmiProvider } from "./context/WagmiProvider";
 
-const displayFont = Fraunces({
+const displayFont = Audiowide({
   variable: "--font-display",
   subsets: ["latin"],
+  weight: "400",
 });
 
-const bodyFont = Space_Grotesk({
+const bodyFont = Exo_2({
   variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 const monoFont = JetBrains_Mono({
