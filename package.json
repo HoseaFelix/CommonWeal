@@ -1,7 +1,8 @@
 {
-  "name": "ai-dictionary",
-  "version": "0.1.0",
+  "name": "compliance-hub",
+  "version": "0.2.0",
   "private": true,
+  "description": "Enterprise Compliance Platform - Multi-service SaaS for policy analysis, comparison, benchmarking, and compliance reporting on GenLayer",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -31,9 +32,13 @@
     "typescript": "^5.8.3"
   },
   "keywords": [
-    "ai",
-    "dictionary",
-    "lexicography",
+    "compliance",
+    "policy",
+    "risk-analysis",
+    "benchmarking",
+    "audit-trail",
+    "enterprise",
+    "saas",
     "web3",
     "genlayer",
     "decentralized"

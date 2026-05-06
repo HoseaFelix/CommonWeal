@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "./context/WalletContext";
+import { WagmiProvider } from "./context/WagmiProvider";
 
 const displayFont = Fraunces({
   variable: "--font-display",
@@ -31,9 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme='dark'>
       <body className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} antialiased font-body bg-bg-dark text-text-main`}>
-        <WalletProvider>
-          {children}
-        </WalletProvider>
+        <WagmiProvider>
+          <WalletProvider>
+            {children}
+          </WalletProvider>
+        </WagmiProvider>
       </body>
     </html>
   );

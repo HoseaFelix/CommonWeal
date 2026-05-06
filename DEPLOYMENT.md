@@ -1,66 +1,71 @@
-# AI Dictionary - Deployment Guide
+# ComplianceHub - Deployment Guide
 
 ## Overview
-Your AI Dictionary project has been successfully converted from YouTube summarization to a full-featured lexicographic analysis tool using GenLayer for decentralized AI consensus.
+ComplianceHub is an enterprise compliance platform built on GenLayer featuring policy analysis, comparison, benchmarking, and reporting capabilities.
 
-## What Changed
+## What's Included
 
-### Removed
-- ❌ YouTube video summarization functionality
-- ❌ Supabase integration
-- ❌ Gemini API dependency
-- ❌ Video transcript fetching
-- ❌ YouTube URL input field
+### Smart Contract (GenLayer)
+- ✅ Policy Analysis with risk scoring
+- ✅ Policy Comparison with divergence analysis
+- ✅ Compliance Benchmarking (GDPR, CCPA, ISO27001, HIPAA)
+- ✅ Aggregated Compliance Reporting
+- ✅ Immutable Audit Trail
+- ✅ Multi-user workspace isolation
 
-### Added
-- ✅ Word/phrase lexicographic analysis
-- ✅ Structured word definitions with Etymology
-- ✅ Key points extraction
-- ✅ Best practices for usage
-- ✅ Common mistakes & warnings
-- ✅ GenLayer smart contract integration (no minimum word limit)
-- ✅ Web3 decentralized consensus for all analyses
+### Frontend (Next.js)
+- ✅ Dashboard with portfolio metrics
+- ✅ Policy analysis interface
+- ✅ Comparison tool
+- ✅ Benchmark runner
+- ✅ Audit trail viewer
+- ✅ Report generator
 
 ## Installation & Setup
 
 ### 1. Install Dependencies
 ```bash
 npm install
-# or
-yarn install
 ```
 
 ### 2. Environment Configuration
 
-Create a `.env.local` file from the `.env.example` template:
+Create a `.env.local` file:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Fill in the required values:
+Required variables:
 ```
-NEXT_PUBLIC_CONTRACT_ADDRESS=0x560160aa5d0855f5d1cC7045ed62Ca394Eb7C862
+NEXT_PUBLIC_CONTRACT_ADDRESS=0x<deployed_contract_address>
 NEXT_PUBLIC_GENLAYER_CHAIN_ID=62255
 NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 ```
 
-### 3. Contract Deployment (Manual)
+### 3. Contract Deployment
 
-The smart contract at `genlayer_contracts/dictionary.py` defines:
-- `analyze_word(word_or_phrase: str)` - Main function to analyze any word or phrase
-- `get_analysis(analysis_id: str)` - Retrieve stored analysis results
-- `get_user_analyses(user_address: str)` - Get all analyses by a user
-- `get_analysis_count()` - Get total analysis count
-- `get_latest_analysis_id()` - Get the latest analysis ID
+The smart contract at `genlayer_contracts/policyriskanalyzer.py` provides:
+
+**Write Methods:**
+- `analyze_policy(policy_text: str, policy_name: str)` - Submit policy for analysis
+- `compare_policies(analysis_a_id: str, analysis_b_id: str)` - Compare two policies
+- `benchmark_against_standard(analysis_id: str, standard_type: str)` - Benchmark against compliance standard
+- `generate_compliance_report()` - Generate portfolio report
+
+**Read Methods:**
+- `get_user_analyses(user_address: str)` - Retrieve all user's analyses
+- `get_user_comparisons(user_address: str)` - Retrieve all user's comparisons
+- `get_user_benchmarks(user_address: str)` - Retrieve all user's benchmarks
+- `get_user_audit_trail(user_address: str)` - Retrieve audit trail
 
 **To deploy:**
 1. Go to [GenLayer Studio](https://studio.genlayer.com)
 2. Create a new project
-3. Upload the `genlayer_contracts/dictionary.py` file
-4. Deploy the contract
+3. Upload `genlayer_contracts/policyriskanalyzer.py`
+4. Deploy the contract (class name: `ComplianceHub`)
 5. Copy the deployed contract address
-6. Update `NEXT_PUBLIC_CONTRACT_ADDRESS` in your `.env.local`
+6. Update `NEXT_PUBLIC_CONTRACT_ADDRESS` in `.env.local`
 
 ### 4. Development Server
 
@@ -68,32 +73,46 @@ The smart contract at `genlayer_contracts/dictionary.py` defines:
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) in your browser.
+Visit [http://localhost:3000](http://localhost:3000)
 
-## Features
+## Workflow
 
-### Core Functionality
-- **Word Analysis**: Enter any English word or phrase
-- **Lexicographic Insights**: Get detailed analysis including:
-  - Overview with part of speech
-  - Key points (etymology, origin, usage domain)
-  - Best practices for usage
-  - Common mistakes and warnings
-  - Concise definition for learners
-- **No Minimum Word Limit**: Accepts single words or phrases up to 500 characters
-- **Decentralized**: All analyses go through GenLayer's consensus mechanism
+### 1. Policy Analysis
+```
+1. User submits policy text
+2. GenLayer validators analyze with AI
+3. Result stored on-chain
+4. Risk metrics displayed on dashboard
+```
 
-### User Experience
-- Clean, modern UI with real-time feedback
-- Wallet connection (auto-generated or MetaMask)
-- Transaction status tracking (30-60 seconds for GenLayer finalization)
-- Error handling and user guidance
-- Responsive design for desktop and mobile
+### 2. Policy Comparison
+```
+1. User selects 2 analyzed policies
+2. Validators compare divergences
+3. Harmonization suggestions generated
+4. Results stored for audit trail
+```
+
+### 3. Compliance Benchmarking
+```
+1. User selects policy & standard (GDPR/CCPA/ISO27001/HIPAA)
+2. Validators assess compliance gaps
+3. Score, timeline, and recommendations generated
+4. Results stored permanently
+```
+
+### 4. Report Generation
+```
+1. User requests compliance report
+2. Contract aggregates all analyses
+3. Portfolio metrics calculated
+4. Executive summary with recommendations
+```
 
 ## Wallet Setup
 
-### Option 1: Auto-Generated Wallet (Testing)
-The app automatically generates a test wallet. You can optionally set a private key in `.env.local`:
+### Option 1: Auto-Generated (Testing)
+The app auto-generates a test wallet. Optionally set in `.env.local`:
 ```
 WALLET_PRIVATE_KEY=0x...
 ```
@@ -101,7 +120,7 @@ WALLET_PRIVATE_KEY=0x...
 ### Option 2: MetaMask (Production)
 - Install MetaMask browser extension
 - Connect to GenLayer Studio testnet
-- Use the wallet button in the app to connect
+- Use wallet button in app to connect
 
 ## Building for Production
 
@@ -112,46 +131,75 @@ npm start
 
 ## Deployment Platforms
 
-### Vercel (Recommended for Next.js)
+### Vercel (Recommended)
 ```bash
 npm i -g vercel
 vercel
 ```
 
 ### Other Platforms
-- Netlify
-- Render
-- Railway
-- Any Node.js hosting
+- Netlify, Render, Railway, etc.
 
-### Environment Variables
-Set these in your deployment platform:
-- `NEXT_PUBLIC_CONTRACT_ADDRESS`
-- `NEXT_PUBLIC_GENLAYER_CHAIN_ID`
-- `NEXT_PUBLIC_GENLAYER_RPC_URL`
+### Required Environment Variables
+```
+NEXT_PUBLIC_CONTRACT_ADDRESS
+NEXT_PUBLIC_GENLAYER_CHAIN_ID=62255
+NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
+```
 
 ## Package Dependencies
 
 ### Core
 - `next` - React framework
-- `react` & `react-dom` - UI library
-- `genlayer-js` - GenLayer SDK for smart contract interaction
+- `react` & `react-dom` - UI
+- `genlayer-js` - GenLayer SDK
 - `zustand` - State management
 - `zod` - Schema validation
 
 ### Styling
-- `tailwindcss` - Utility-first CSS
-- `daisyui` - Tailwind component library
+- `tailwindcss` - Utility CSS
+- `daisyui` - Tailwind components
 
-### Wallet
+### Web3
 - `viem` - Ethereum utilities
-- `wagmi` - React hooks for wallet
+- `wagmi` - React wallet hooks
 
-## Key Contract Methods
+## Compliance Standards Supported
 
-### Write Function
-```python
-analyze_word(word_or_phrase: str) -> void
+- **GDPR** - General Data Protection Regulation
+- **CCPA** - California Consumer Privacy Act
+- **ISO 27001** - Information Security Management
+- **HIPAA** - Health Insurance Portability & Accountability
+
+## Contract Storage Structure
+
+### TreeMaps (Multi-user isolation)
+- `analyses: TreeMap[str, PolicyAnalysis]` - All policy analyses
+- `user_analyses: TreeMap[str, DynArray[str]]` - Per-user analysis IDs
+- `comparisons: TreeMap[str, PolicyComparison]` - Policy comparisons
+- `benchmarks: TreeMap[str, ComplianceBenchmark]` - Benchmarks
+- `audit_trails: TreeMap[str, AuditTrail]` - Activity log
+
+## Validation Rules
+
+### Policy Analysis
+- Risk score: 0-100 (integer)
+- Risk level: Low/Medium/High/Critical
+- Risky clauses: List of {clause, risk, reason}
+- Compliance flags: List of strings
+
+### Policy Comparison
+- Divergence score: 0-100 (0 = identical, 100 = completely different)
+- Key differences: List of divergences
+- Shared risks: List of common risks
+
+### Benchmarking
+- Compliance score: 0-100 (100 = fully compliant)
+- Gaps: List of missing controls
+- Improvement priority: High/Medium/Low
+- Timeline: Suggested remediation timeframe
+
+## Troubleshooting
 ```
 Submits a word/phrase for lexicographic analysis using GenLayer consensus.
 
