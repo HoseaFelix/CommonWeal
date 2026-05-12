@@ -62,8 +62,3 @@ Then open `http://localhost:3000`.
 - Wagmi
 - viem
 - GenLayer
-
-## Notes
-
-- This repo is now centered on compliance workflows, not content summarization
-- Deployment and documentation should reference `complianceHub.py` consistently

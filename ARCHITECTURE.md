@@ -334,4 +334,3 @@ Level 4: Complex Consensus (All methods)
 
 ---
 
-This complexity drives higher GenLayer scoring.
