@@ -1,132 +1,120 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { getContractAddress, getGenlayerClient, normalizeAuditEntry } from '@/app/lib/genlayer';
+import { getContractAddress, getGenlayerClient, normalizeActivityEntry } from '@/app/lib/genlayer';
+
+type ActivityRecord = ReturnType<typeof normalizeActivityEntry>;
+
+const ACTION_LABELS: Record<string, string> = {
+  REVIEW_CREATED: 'Vendor review recorded',
+  COMPARISON_CREATED: 'Vendor comparison recorded',
+  BENCHMARK_CREATED: 'Framework benchmark recorded',
+  REPORT_CREATED: 'Diligence report recorded',
+};
 
 export default function AuditPanel() {
   const { account, walletType } = useWallet();
-  const [auditTrail, setAuditTrail] = useState<any[]>([]);
-  const [auditLoading, setAuditLoading] = useState(false);
+  const [activity, setActivity] = useState<ActivityRecord[]>([]);
+  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('ALL');
 
   useEffect(() => {
-    const loadAudit = async () => {
+    const loadActivity = async () => {
       if (!account?.address) {
-        setAuditTrail([]);
+        setActivity([]);
         return;
       }
 
-      setAuditLoading(true);
+      setLoading(true);
       try {
         const client = getGenlayerClient(account, walletType);
         const result = await client.readContract({
           address: getContractAddress(),
-          functionName: 'get_user_audit_trail',
+          functionName: 'get_user_activity',
           args: [account.address],
         });
 
-        setAuditTrail(Array.isArray(result) ? result.map((item) => normalizeAuditEntry(item)) : []);
+        setActivity(Array.isArray(result) ? result.map((item) => normalizeActivityEntry(item)) : []);
       } catch (caughtError) {
-        console.error('Failed to load audit trail:', caughtError);
-        setAuditTrail([]);
+        console.error('Failed to load activity log:', caughtError);
+        setActivity([]);
       } finally {
-        setAuditLoading(false);
+        setLoading(false);
       }
     };
 
-    void loadAudit();
+    void loadActivity();
   }, [account, walletType]);
 
-  const getActionColor = (action: string) => {
-    switch (action) {
-      case 'ANALYSIS_CREATED':
-        return 'bg-blue-500/10 border-blue-500/30 text-blue-400';
-      case 'COMPARISON_CREATED':
-        return 'bg-purple-500/10 border-purple-500/30 text-purple-400';
-      case 'BENCHMARK_CREATED':
-        return 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400';
-      case 'REPORT_GENERATED':
-        return 'bg-green-500/10 border-green-500/30 text-green-400';
-      default:
-        return 'bg-gray-500/10 border-gray-500/30 text-gray-400';
-    }
-  };
-
-  const getActionLabel = (action: string) => {
-    const labels: Record<string, string> = {
-      ANALYSIS_CREATED: 'Policy Analyzed',
-      COMPARISON_CREATED: 'Policies Compared',
-      BENCHMARK_CREATED: 'Benchmark Run',
-      REPORT_GENERATED: 'Report Generated',
-    };
-    return labels[action] || action;
-  };
-
-  const filteredAudit = filter === 'ALL'
-    ? auditTrail
-    : auditTrail.filter((item) => item.action === filter);
-
-  const actions = ['ALL', ...new Set(auditTrail.map((item) => item.action))];
+  const actions = ['ALL', ...new Set(activity.map((entry) => entry.action))];
+  const visibleEntries = filter === 'ALL' ? activity : activity.filter((entry) => entry.action === filter);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-display mb-2">Audit Trail</h2>
-        <p className="text-text-muted">Complete activity log of all compliance operations performed by your workspace.</p>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {actions.map((action) => (
-          <button
-            key={action}
-            onClick={() => setFilter(action)}
-            className={`px-4 py-2 rounded-lg border transition-all text-sm ${
-              filter === action
-                ? 'bg-accent-primary/20 border-accent-primary text-accent-primary'
-                : 'bg-card-dark/60 border-card-border/50 text-text-muted hover:border-card-border'
-            }`}
-          >
-            {action}
-          </button>
-        ))}
-      </div>
-
-      {auditLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-accent-primary border-r-2 border-accent-secondary"></div>
+    <div className="space-y-5">
+      <section className="panel px-5 py-5 sm:px-6">
+        <div className="eyebrow">Permanent Activity</div>
+        <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 className="font-display text-2xl">Decision Ledger</h2>
+            <p className="mt-2 text-sm leading-6 text-text-muted">
+              Every review, comparison, benchmark, and briefing is recorded with a durable activity entry.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {actions.map((action) => (
+              <button
+                key={action}
+                onClick={() => setFilter(action)}
+                className={`rounded-full px-4 py-2 text-sm transition ${
+                  filter === action
+                    ? 'bg-accent-primary text-[#fff8f1]'
+                    : 'bg-white/60 text-text-muted hover:bg-white hover:text-text-main'
+                }`}
+              >
+                {action === 'ALL' ? 'All activity' : ACTION_LABELS[action] || action}
+              </button>
+            ))}
+          </div>
         </div>
-      ) : filteredAudit.length === 0 ? (
-        <div className="p-8 rounded-2xl bg-card-dark/60 border border-card-border/50 text-center">
-          <div className="text-text-muted">No audit entries found</div>
+      </section>
+
+      {loading ? (
+        <div className="flex justify-center py-14">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent-primary/30 border-t-accent-primary" />
+        </div>
+      ) : visibleEntries.length === 0 ? (
+        <div className="panel px-6 py-12 text-center text-sm text-text-muted">
+          No activity entries are available for this wallet yet.
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredAudit.map((entry, idx) => (
-            <div key={idx} className="p-6 rounded-2xl bg-gradient-to-r from-card-dark/60 via-card-dark/40 to-bg-dark/40 border border-card-border/50 hover:border-card-border/80 transition-all">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg border mb-3 font-medium text-sm ${getActionColor(entry.action)}`}>
-                    {getActionLabel(entry.action)}
-                  </div>
-                  <p className="text-sm text-text-muted">{entry.change_details}</p>
+          {visibleEntries.map((entry) => (
+            <article key={entry.entry_id} className="panel-soft px-5 py-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="text-sm font-semibold">{ACTION_LABELS[entry.action] || entry.action}</div>
+                  <p className="mt-2 text-sm leading-6 text-text-main">{entry.details}</p>
+                </div>
+                <div className="rounded-full bg-white px-3 py-1 text-xs uppercase tracking-[0.18em] text-text-muted">
+                  #{entry.timestamp}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs pt-3 border-t border-card-border/30">
+              <div className="mt-4 grid grid-cols-1 gap-3 border-t border-edge/70 pt-4 text-xs sm:grid-cols-3">
                 <div>
-                  <div className="text-text-muted mb-1">Resource ID</div>
-                  <div className="font-mono text-text-main break-all">{entry.policy_id}</div>
+                  <div className="text-text-muted">Resource</div>
+                  <div className="mt-1 break-all font-mono text-text-main">{entry.resource_id}</div>
                 </div>
                 <div>
-                  <div className="text-text-muted mb-1">Author</div>
-                  <div className="font-mono text-text-main truncate">{entry.author}</div>
+                  <div className="text-text-muted">Author</div>
+                  <div className="mt-1 break-all font-mono text-text-main">{entry.author}</div>
                 </div>
                 <div>
-                  <div className="text-text-muted mb-1">Timestamp</div>
-                  <div className="font-mono text-text-main">#{entry.timestamp}</div>
+                  <div className="text-text-muted">Action</div>
+                  <div className="mt-1 text-text-main">{entry.action}</div>
                 </div>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       )}

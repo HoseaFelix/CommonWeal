@@ -1,19 +1,15 @@
 import { z } from 'zod';
 
-export const policySchema = z.object({
-  riskScore: z.number(),
-  riskLevel: z.string(),
+export const vendorReviewSchema = z.object({
+  trustScore: z.number(),
+  decision: z.string(),
   summary: z.string(),
-  riskyClauses: z.array(z.object({
-    clause: z.string(),
-    risk: z.string(),
-    reason: z.string().optional(),
+  criticalFindings: z.array(z.object({
+    area: z.string(),
+    severity: z.string(),
+    rationale: z.string(),
   })),
-  plainEnglish: z.array(z.string()),
-  complianceFlags: z.array(z.string()),
-  recommendations: z.array(z.string()),
+  strengths: z.array(z.string()),
+  followUpQuestions: z.array(z.string()),
+  recommendedControls: z.array(z.string()),
 });
-
-
-
-

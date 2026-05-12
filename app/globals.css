@@ -1,64 +1,96 @@
 @import "tailwindcss";
 
 @theme {
-  /* Success & Error */
-  --color-success: #00ff88;
-  --color-destructive: #ff4444;
-  --color-warning: #ffaa00;
+  --color-bg: #f0eae0;
+  --color-panel: #fbf6ee;
+  --color-panel-strong: #f5ede2;
+  --color-edge: #d6cabb;
+  --color-text-main: #201a17;
+  --color-text-muted: #6f665f;
+  --color-accent-primary: #965137;
+  --color-accent-secondary: #315b57;
+  --color-accent-tertiary: #b69353;
+  --color-success: #3e6d4d;
+  --color-warning: #9b6b30;
+  --color-destructive: #9a433a;
+}
 
-  /* Cyberpunk Neon Palette */
-  --color-bg-dark: #0a0a0a;
-  --color-card-dark: #141414;
-  --color-card-border: #2a2a2a;
-  --color-text-main: #ffffff;
-  --color-text-muted: #a0a0a0;
+@layer base {
+  * {
+    border-color: var(--color-edge);
+  }
 
-  /* Accents - Neon Green, Pink, Blue */
-  --color-accent-primary: #00ff88;
-  --color-accent-hover: #33ffaa;
-  --color-accent-secondary: #ff0080;
-  --color-accent-tertiary: #0088ff;
+  html {
+    background: var(--color-bg);
+  }
+
+  body {
+    min-height: 100vh;
+    color: var(--color-text-main);
+    background:
+      radial-gradient(circle at top left, rgba(150, 81, 55, 0.12), transparent 32%),
+      radial-gradient(circle at bottom right, rgba(49, 91, 87, 0.1), transparent 28%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(240, 234, 224, 0.94)),
+      var(--color-bg);
+  }
 }
 
 @layer components {
-  .premium-card {
-    @apply bg-card-dark border border-card-border rounded-2xl shadow-[0_22px_60px_rgba(0,0,0,0.35)] transition-all duration-300;
-  }
-
-  .premium-input {
-    @apply bg-bg-dark border border-card-border rounded-xl text-text-main placeholder-text-muted/50 focus:outline-none focus:border-accent-primary focus:shadow-[0_0_0_3px_rgba(226,182,89,0.15)] transition-all duration-300;
-  }
-
-  .premium-btn {
-    @apply bg-gradient-to-r from-accent-primary to-accent-secondary text-bg-dark font-semibold rounded-lg hover:shadow-[0_12px_30px_rgba(226,182,89,0.35)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md;
-  }
-
-  .glass-panel {
-    @apply bg-card-dark/70 backdrop-blur-xl border border-card-border/50;
-  }
-
-  .gradient-text {
-    @apply bg-gradient-to-r from-accent-primary via-accent-tertiary to-accent-secondary bg-clip-text text-transparent;
-  }
-
   .font-display {
-    font-family: var(--font-display), serif;
+    font-family: "Palatino Linotype", "Book Antiqua", "Iowan Old Style", "Baskerville", serif;
   }
 
   .font-body {
-    font-family: var(--font-body), sans-serif;
+    font-family: "Trebuchet MS", "Gill Sans", "Segoe UI", sans-serif;
   }
 
   .font-mono {
-    font-family: var(--font-mono), monospace;
+    font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+  }
+
+  .panel {
+    @apply rounded-[1.75rem] border shadow-[0_16px_45px_rgba(47,35,26,0.08)];
+    background: linear-gradient(180deg, rgba(251, 246, 238, 0.95), rgba(245, 237, 226, 0.92));
+  }
+
+  .panel-soft {
+    @apply rounded-[1.5rem] border;
+    background: rgba(251, 246, 238, 0.78);
+  }
+
+  .field {
+    @apply w-full rounded-2xl border px-4 py-3 text-sm text-text-main outline-none transition;
+    background: rgba(255, 252, 247, 0.92);
+  }
+
+  .field:focus {
+    border-color: rgba(150, 81, 55, 0.55);
+    box-shadow: 0 0 0 3px rgba(150, 81, 55, 0.11);
+  }
+
+  .primary-btn {
+    @apply inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+    color: #fff9f2;
+    background: linear-gradient(135deg, var(--color-accent-primary), #7f3f28);
+    box-shadow: 0 14px 32px rgba(150, 81, 55, 0.2);
+  }
+
+  .secondary-btn {
+    @apply inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition;
+    color: var(--color-text-main);
+    background: rgba(255, 252, 247, 0.78);
+    border: 1px solid rgba(111, 102, 95, 0.2);
+  }
+
+  .eyebrow {
+    @apply text-[0.68rem] uppercase tracking-[0.32em];
+    color: var(--color-text-muted);
+  }
+
+  .paper-grid {
+    background-image:
+      linear-gradient(rgba(111, 102, 95, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(111, 102, 95, 0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
   }
 }
-
-body {
-  background-color: var(--color-bg-dark);
-  color: var(--color-text-main);
-  background-image: radial-gradient(circle at 20% 20%, rgba(0, 255, 136, 0.08) 0%, transparent 45%),
-                    radial-gradient(circle at 80% 70%, rgba(255, 0, 128, 0.08) 0%, transparent 45%),
-                    radial-gradient(circle at 50% 50%, rgba(0, 136, 255, 0.05) 0%, transparent 50%);
-}
-

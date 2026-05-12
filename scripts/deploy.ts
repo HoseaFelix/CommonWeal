@@ -3,10 +3,6 @@ import { privateKeyToAccount } from 'viem/accounts';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// Load env vars from process.env
-const PRIVATE_KEY = process.env.PRIVATE_KEY;
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
-
 // GenLayer Studio Config
 const GENLAYER_CHAIN = defineChain({
     id: 62255,
@@ -43,7 +39,7 @@ async function main() {
     });
 
     // 2. Read Contract Source
-    const contractPath = path.resolve(__dirname, '../genlayer_contracts/complianceHub.py');
+    const contractPath = path.resolve(__dirname, '../genlayer_contracts/vendorTrustLedger.py');
     const contractSource = fs.readFileSync(contractPath, 'utf8');
 
     console.log(`Reading contract from ${contractPath}...`);
@@ -54,7 +50,7 @@ async function main() {
     console.log("Broadcasting deployment transaction...");
     const hash = await walletClient.sendTransaction({
         data: bytecode as `0x${string}`,
-        to: null as any,
+        to: undefined,
         kzg: undefined
     });
 
@@ -66,7 +62,7 @@ async function main() {
     if (receipt.contractAddress) {
         console.log("\nDeployment successful.");
         console.log(`New Contract Address: ${receipt.contractAddress}`);
-        console.log("\nPlease update constants/genlayer_config.ts with this address.");
+        console.log("\nPlease update NEXT_PUBLIC_CONTRACT_ADDRESS with this address.");
     } else {
         console.error("Deployment failed: No contract address in receipt.");
         console.log(receipt);

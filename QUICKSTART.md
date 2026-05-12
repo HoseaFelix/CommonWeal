@@ -1,28 +1,20 @@
-# ComplianceHub Quick Start
+# VendorLens Quick Start
 
-## What This Project Is
+## Project Shape
 
-ComplianceHub is a GenLayer application for policy risk analysis and compliance operations. It lets users:
+VendorLens is a procurement-facing due diligence app built on GenLayer. It helps a team answer one practical question: should we trust this vendor enough to move forward?
 
-- Analyze a policy
-- Compare two policy analyses
-- Benchmark a policy against major standards
-- Review audit activity
-- Generate compliance reports
+## Main Flows
+
+1. Review a vendor dossier
+2. Compare two reviewed vendors
+3. Benchmark a vendor against a framework
+4. Generate a due diligence briefing
 
 ## Main Contract
 
-- File: `genlayer_contracts/complianceHub.py`
-- Class: `ComplianceHub`
-
-## Frontend Areas
-
-- `Dashboard.tsx`: portfolio overview
-- `AnalyzePanel.tsx`: submit policy text
-- `ComparisonPanel.tsx`: compare analyses
-- `BenchmarkPanel.tsx`: run standards checks
-- `AuditPanel.tsx`: inspect activity history
-- `ReportsPanel.tsx`: generate summaries
+- File: `genlayer_contracts/vendorTrustLedger.py`
+- Class: `VendorTrustLedger`
 
 ## Setup
 
@@ -38,27 +30,17 @@ NEXT_PUBLIC_GENLAYER_CHAIN_ID=62255
 NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 ```
 
-## Deploy The Contract
+## Deploy
 
 1. Open `https://studio.genlayer.com`
-2. Upload `genlayer_contracts/complianceHub.py`
-3. Deploy it
-4. Copy the contract address into `.env.local`
+2. Upload `genlayer_contracts/vendorTrustLedger.py`
+3. Deploy the contract
+4. Copy the resulting address into `.env.local`
 
-## Start Locally
+## Start
 
 ```bash
 npm run dev
 ```
 
-Then open `http://localhost:3000`.
-
-## Tech Stack
-
-- Next.js
-- React
-- TypeScript
-- Tailwind CSS
-- Wagmi
-- viem
-- GenLayer
+Open `http://localhost:3000`.

@@ -1,162 +1,177 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { getContractAddress, getGenlayerClient, normalizeAnalysis } from '@/app/lib/genlayer';
+import { getContractAddress, getGenlayerClient, normalizeReview } from '@/app/lib/genlayer';
+
+type ReviewRecord = ReturnType<typeof normalizeReview>;
+
+function DecisionTone(decision: string) {
+  switch (decision.toLowerCase()) {
+    case 'approve':
+      return 'text-success';
+    case 'conditional':
+      return 'text-warning';
+    default:
+      return 'text-destructive';
+  }
+}
 
 export default function Dashboard() {
   const { account, walletType } = useWallet();
-  const [analyses, setAnalyses] = useState<any[]>([]);
-  const [analysesLoading, setAnalysesLoading] = useState(false);
+  const [reviews, setReviews] = useState<ReviewRecord[]>([]);
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
-    totalPolicies: 0,
-    averageRisk: 0,
-    highRiskCount: 0,
-    criticalCount: 0,
+    totalVendors: 0,
+    averageTrust: 0,
+    escalatedCount: 0,
+    conditionalCount: 0,
   });
 
   useEffect(() => {
-    const loadAnalyses = async () => {
+    const loadReviews = async () => {
       if (!account?.address) {
-        setAnalyses([]);
-        setStats({
-          totalPolicies: 0,
-          averageRisk: 0,
-          highRiskCount: 0,
-          criticalCount: 0,
-        });
+        setReviews([]);
+        setStats({ totalVendors: 0, averageTrust: 0, escalatedCount: 0, conditionalCount: 0 });
         return;
       }
 
-      setAnalysesLoading(true);
+      setLoading(true);
       try {
         const client = getGenlayerClient(account, walletType);
-        const analysesResult = await client.readContract({
+        const result = await client.readContract({
           address: getContractAddress(),
-          functionName: 'get_user_analyses',
+          functionName: 'get_user_reviews',
           args: [account.address],
         });
 
-        const normalized = Array.isArray(analysesResult)
-          ? analysesResult.map((item) => normalizeAnalysis(item))
-          : [];
+        const normalized = Array.isArray(result) ? result.map((item) => normalizeReview(item)) : [];
+        setReviews(normalized);
 
-        setAnalyses(normalized);
+        const averageTrust = normalized.length > 0
+          ? Math.round(normalized.reduce((sum, review) => sum + Number(review.trust_score || 0), 0) / normalized.length)
+          : 0;
 
-        if (normalized.length > 0) {
-          const avgRisk = normalized.reduce((sum, analysis) => sum + Number(analysis.risk_score || 0), 0) / normalized.length;
-          const high = normalized.filter((analysis) => analysis.risk_level.toLowerCase() === 'high').length;
-          const critical = normalized.filter((analysis) => analysis.risk_level.toLowerCase() === 'critical').length;
-
-          setStats({
-            totalPolicies: normalized.length,
-            averageRisk: Math.round(avgRisk),
-            highRiskCount: high,
-            criticalCount: critical,
-          });
-        } else {
-          setStats({
-            totalPolicies: 0,
-            averageRisk: 0,
-            highRiskCount: 0,
-            criticalCount: 0,
-          });
-        }
+        setStats({
+          totalVendors: normalized.length,
+          averageTrust,
+          escalatedCount: normalized.filter((review) => review.decision.toLowerCase() === 'escalate').length,
+          conditionalCount: normalized.filter((review) => review.decision.toLowerCase() === 'conditional').length,
+        });
       } catch (error) {
-        console.error('Failed to load analyses:', error);
-        setAnalyses([]);
+        console.error('Failed to load vendor reviews:', error);
+        setReviews([]);
       } finally {
-        setAnalysesLoading(false);
+        setLoading(false);
       }
     };
 
-    void loadAnalyses();
+    void loadReviews();
   }, [account, walletType]);
 
-  const getRiskColor = (level: string) => {
-    switch (level?.toLowerCase()) {
-      case 'critical': return 'text-red-400 bg-red-500/10 border-red-500/30';
-      case 'high': return 'text-orange-400 bg-orange-500/10 border-orange-500/30';
-      case 'medium': return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30';
-      default: return 'text-green-400 bg-green-500/10 border-green-500/30';
-    }
-  };
-
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-          <div className="text-xs text-text-muted uppercase tracking-widest mb-2">Total Policies</div>
-          <div className="text-4xl font-bold text-accent-primary mb-1">{stats.totalPolicies}</div>
-          <div className="text-xs text-text-muted">analyzed & stored</div>
+    <div className="space-y-6">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="panel px-5 py-5">
+          <div className="eyebrow">Vendor Dossiers</div>
+          <div className="mt-4 text-4xl font-bold text-accent-primary">{stats.totalVendors}</div>
+          <p className="mt-2 text-sm text-text-muted">Active vendor reviews recorded for this wallet.</p>
         </div>
-
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-          <div className="text-xs text-text-muted uppercase tracking-widest mb-2">Avg Risk Score</div>
-          <div className="text-4xl font-bold text-accent-secondary mb-1">{stats.averageRisk}/100</div>
-          <div className="text-xs text-text-muted">portfolio-wide</div>
+        <div className="panel px-5 py-5">
+          <div className="eyebrow">Average Trust</div>
+          <div className="mt-4 text-4xl font-bold text-accent-secondary">{stats.averageTrust}</div>
+          <p className="mt-2 text-sm text-text-muted">Consensus score across your reviewed providers.</p>
         </div>
-
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-          <div className="text-xs text-text-muted uppercase tracking-widest mb-2">High Risk</div>
-          <div className="text-4xl font-bold text-orange-400 mb-1">{stats.highRiskCount}</div>
-          <div className="text-xs text-text-muted">policies flagged</div>
+        <div className="panel px-5 py-5">
+          <div className="eyebrow">Escalations</div>
+          <div className="mt-4 text-4xl font-bold text-destructive">{stats.escalatedCount}</div>
+          <p className="mt-2 text-sm text-text-muted">Vendors that need deeper legal or security review.</p>
         </div>
-
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-          <div className="text-xs text-text-muted uppercase tracking-widest mb-2">Critical</div>
-          <div className="text-4xl font-bold text-red-400 mb-1">{stats.criticalCount}</div>
-          <div className="text-xs text-text-muted">require attention</div>
+        <div className="panel px-5 py-5">
+          <div className="eyebrow">Conditional</div>
+          <div className="mt-4 text-4xl font-bold text-warning">{stats.conditionalCount}</div>
+          <p className="mt-2 text-sm text-text-muted">Approvals that depend on remediation or evidence.</p>
         </div>
-      </div>
+      </section>
 
-      <div>
-        <h2 className="text-2xl font-display mb-6">Recent Policy Analyses</h2>
-
-        {analysesLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-accent-primary border-r-2 border-accent-secondary"></div>
+      <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="panel px-5 py-5 sm:px-6">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <div className="eyebrow">Recent Reviews</div>
+              <h2 className="mt-2 font-display text-2xl">Vendor Readiness Ledger</h2>
+            </div>
+            <div className="rounded-full border border-edge/80 px-3 py-1 text-xs uppercase tracking-[0.22em] text-text-muted">
+              Last 5 entries
+            </div>
           </div>
-        ) : analyses.length === 0 ? (
-          <div className="p-8 rounded-2xl bg-card-dark/60 border border-card-border/50 text-center">
-            <div className="text-text-muted">No policies analyzed yet. Start by analyzing your first policy.</div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {analyses.slice(0, 5).map((analysis, idx) => (
-              <div key={idx} className="p-6 rounded-2xl bg-gradient-to-r from-card-dark/60 via-card-dark/40 to-bg-dark/40 border border-card-border/50 hover:border-card-border/80 transition-all">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-2">{analysis.policy_name || `Analysis #${analysis.analysis_id}`}</h3>
-                    <p className="text-sm text-text-muted line-clamp-2">{analysis.summary}</p>
-                  </div>
-                  <div className={`px-3 py-1 rounded-lg border text-sm font-medium ${getRiskColor(analysis.risk_level)}`}>
-                    {analysis.risk_level}
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <div className="text-text-muted text-xs mb-1">Risk Score</div>
-                    <div className="font-semibold text-accent-primary">{analysis.risk_score}/100</div>
+          {loading ? (
+            <div className="flex justify-center py-14">
+              <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent-primary/30 border-t-accent-primary" />
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="mt-5 rounded-[1.4rem] border border-dashed border-edge bg-white/40 px-6 py-12 text-center text-sm text-text-muted">
+              No vendor dossiers yet. Start with a security packet, DPA, or questionnaire response.
+            </div>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {reviews.slice(0, 5).map((review) => (
+                <article key={review.review_id} className="rounded-[1.4rem] border border-edge bg-white/55 px-5 py-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <h3 className="text-lg font-semibold">{review.vendor_name}</h3>
+                      <p className="mt-1 text-sm text-text-muted">{review.service_scope}</p>
+                    </div>
+                    <div className={`rounded-full border border-current/20 px-3 py-1 text-sm font-semibold ${DecisionTone(review.decision)}`}>
+                      {review.decision}
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-text-muted text-xs mb-1">Risky Clauses</div>
-                    <div className="font-semibold">{analysis.risky_clauses?.length || 0}</div>
+                  <p className="mt-4 text-sm leading-6 text-text-main">{review.summary}</p>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                    <div>
+                      <div className="text-text-muted">Trust Score</div>
+                      <div className="mt-1 font-semibold text-accent-primary">{review.trust_score}/100</div>
+                    </div>
+                    <div>
+                      <div className="text-text-muted">Findings</div>
+                      <div className="mt-1 font-semibold">{review.critical_findings.length}</div>
+                    </div>
+                    <div>
+                      <div className="text-text-muted">Questions</div>
+                      <div className="mt-1 font-semibold">{review.follow_up_questions.length}</div>
+                    </div>
+                    <div>
+                      <div className="text-text-muted">Controls</div>
+                      <div className="mt-1 font-semibold">{review.recommended_controls.length}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-text-muted text-xs mb-1">Flags</div>
-                    <div className="font-semibold">{analysis.compliance_flags?.length || 0}</div>
-                  </div>
-                  <div>
-                    <div className="text-text-muted text-xs mb-1">Recommendations</div>
-                    <div className="font-semibold">{analysis.recommendations?.length || 0}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-5">
+          <div className="panel px-5 py-5 sm:px-6">
+            <div className="eyebrow">What This Workspace Tracks</div>
+            <ul className="mt-4 space-y-3 text-sm leading-6 text-text-main">
+              <li>Consensus review of vendor security and legal materials.</li>
+              <li>Decision posture for procurement intake and escalation.</li>
+              <li>Framework-specific readiness against trust requirements.</li>
+              <li>Portfolio summaries you can turn into approval notes.</li>
+            </ul>
           </div>
-        )}
-      </div>
+          <div className="panel px-5 py-5 sm:px-6">
+            <div className="eyebrow">Good Starting Inputs</div>
+            <ul className="mt-4 space-y-3 text-sm leading-6 text-text-main">
+              <li>Security overviews and trust center exports.</li>
+              <li>DPA, privacy notice, and incident response statements.</li>
+              <li>Business continuity descriptions or procurement questionnaires.</li>
+              <li>Any commitments the vendor made during sales review.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

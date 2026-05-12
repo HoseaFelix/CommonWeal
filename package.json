@@ -1,13 +1,13 @@
 {
-  "name": "compliance-hub",
+  "name": "vendor-lens",
   "version": "0.2.0",
   "private": true,
-  "description": "Enterprise Compliance Platform - Multi-service SaaS for policy analysis, comparison, benchmarking, and compliance reporting on GenLayer",
+  "description": "GenLayer vendor due diligence workspace for vendor review, framework benchmarking, comparison, and approval briefings",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "genlayer-js": "^0.18.9",
@@ -32,11 +32,11 @@
     "typescript": "^5.8.3"
   },
   "keywords": [
-    "compliance",
-    "policy",
-    "risk-analysis",
-    "benchmarking",
-    "audit-trail",
+    "vendor-due-diligence",
+    "third-party-risk",
+    "procurement",
+    "vendor-review",
+    "trust-frameworks",
     "enterprise",
     "saas",
     "web3",

@@ -1,58 +1,57 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { getContractAddress, getGenlayerClient, normalizeAnalysis, normalizeComparison } from '@/app/lib/genlayer';
+import { getContractAddress, getGenlayerClient, normalizeComparison, normalizeReview } from '@/app/lib/genlayer';
+
+type ReviewRecord = ReturnType<typeof normalizeReview>;
+type ComparisonRecord = ReturnType<typeof normalizeComparison>;
 
 export default function ComparisonPanel() {
   const { account, walletType } = useWallet();
-  const [analyses, setAnalyses] = useState<any[]>([]);
-  const [analysesLoading, setAnalysesLoading] = useState(false);
-  const [policyA, setPolicyA] = useState('');
-  const [policyB, setPolicyB] = useState('');
-  const [comparisonLoading, setComparisonLoading] = useState(false);
-  const [comparison, setComparison] = useState<any>(null);
+  const [reviews, setReviews] = useState<ReviewRecord[]>([]);
+  const [reviewA, setReviewA] = useState('');
+  const [reviewB, setReviewB] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [comparison, setComparison] = useState<(ComparisonRecord & { transactionHash: string; completedAt: string }) | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const loadAnalyses = async () => {
+    const loadReviews = async () => {
       if (!account?.address) {
-        setAnalyses([]);
+        setReviews([]);
         return;
       }
 
-      setAnalysesLoading(true);
       try {
         const client = getGenlayerClient(account, walletType);
         const result = await client.readContract({
           address: getContractAddress(),
-          functionName: 'get_user_analyses',
+          functionName: 'get_user_reviews',
           args: [account.address],
         });
 
-        setAnalyses(Array.isArray(result) ? result.map((item) => normalizeAnalysis(item)) : []);
+        setReviews(Array.isArray(result) ? result.map((item) => normalizeReview(item)) : []);
       } catch (caughtError) {
-        console.error('Failed to load analyses for comparison:', caughtError);
-        setAnalyses([]);
-      } finally {
-        setAnalysesLoading(false);
+        console.error('Failed to load reviews for comparison:', caughtError);
+        setReviews([]);
       }
     };
 
-    void loadAnalyses();
+    void loadReviews();
   }, [account, walletType]);
 
   const handleCompare = async () => {
-    if (!policyA || !policyB || policyA === policyB) {
-      setError('Please select two different policies to compare');
+    if (!reviewA || !reviewB || reviewA === reviewB) {
+      setError('Select two different vendor reviews to compare.');
       return;
     }
 
     if (!account?.address) {
-      setError('Please connect your wallet');
+      setError('Connect a wallet before comparing vendors.');
       return;
     }
 
-    setComparisonLoading(true);
+    setLoading(true);
     setError('');
     setComparison(null);
 
@@ -60,8 +59,8 @@ export default function ComparisonPanel() {
       const client = getGenlayerClient(account, walletType);
       const txHash = await client.writeContract({
         address: getContractAddress(),
-        functionName: 'compare_policies',
-        args: [policyA, policyB],
+        functionName: 'compare_vendors',
+        args: [reviewA, reviewB],
         value: 0n,
       });
 
@@ -72,7 +71,7 @@ export default function ComparisonPanel() {
       });
 
       if (receipt.result !== 0 && receipt.result !== 6) {
-        throw new Error(receipt.resultName || 'Comparison failed during consensus');
+        throw new Error(receipt.resultName || 'Vendor comparison failed during consensus');
       }
 
       const comparisonsResult = await client.readContract({
@@ -82,162 +81,132 @@ export default function ComparisonPanel() {
       });
 
       if (!Array.isArray(comparisonsResult) || comparisonsResult.length === 0) {
-        throw new Error('Comparison finalized, but no comparison result was returned');
+        throw new Error('Comparison completed, but no comparison record was returned.');
       }
 
       const latestComparison = normalizeComparison(comparisonsResult[comparisonsResult.length - 1]);
-
       setComparison({
-        message: 'Policy comparison completed!',
+        ...latestComparison,
         transactionHash: txHash,
         completedAt: new Date().toLocaleString(),
-        ...latestComparison,
       });
-      setPolicyA('');
-      setPolicyB('');
+      setReviewA('');
+      setReviewB('');
     } catch (caughtError) {
-      console.error('Error comparing policies:', caughtError);
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to compare policies');
+      console.error('Error comparing vendors:', caughtError);
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to compare vendors');
     } finally {
-      setComparisonLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-display mb-2">Compare Policies</h2>
-        <p className="text-text-muted">Analyze divergences, shared risks, and harmonization opportunities between two policies.</p>
-      </div>
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+      <section className="panel px-5 py-5 sm:px-6">
+        <div className="eyebrow">Side-by-Side Review</div>
+        <h2 className="mt-2 font-display text-2xl">Choose Between Vendors</h2>
+        <p className="mt-2 text-sm leading-6 text-text-muted">
+          Compare two completed vendor reviews to surface differentiation, repeated exposure patterns,
+          and a concise recommendation for procurement, legal, or security leadership.
+        </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-              <label className="block text-sm font-semibold mb-3">Policy A</label>
-              <select
-                value={policyA}
-                onChange={(e) => setPolicyA(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-bg-dark border border-card-border/50 text-text-main focus:outline-none focus:border-accent-primary/50 transition-all"
-              >
-                <option value="">Select first policy...</option>
-                {analyses.map((analysis) => (
-                <option key={analysis.analysis_id} value={analysis.analysis_id}>
-                    {(analysis.policy_name || analysis.analysis_id)} - {analysis.risk_level}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-              <label className="block text-sm font-semibold mb-3">Policy B</label>
-              <select
-                value={policyB}
-                onChange={(e) => setPolicyB(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-bg-dark border border-card-border/50 text-text-main focus:outline-none focus:border-accent-primary/50 transition-all"
-              >
-                <option value="">Select second policy...</option>
-                {analyses.map((analysis) => (
-                <option key={analysis.analysis_id} value={analysis.analysis_id}>
-                    {(analysis.policy_name || analysis.analysis_id)} - {analysis.risk_level}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-semibold">Vendor Review A</label>
+            <select value={reviewA} onChange={(event) => setReviewA(event.target.value)} className="field">
+              <option value="">Select a reviewed vendor...</option>
+              {reviews.map((review) => (
+                <option key={review.review_id} value={review.review_id}>
+                  {review.vendor_name} - {review.decision}
+                </option>
+              ))}
+            </select>
           </div>
-
-          <button
-            onClick={handleCompare}
-            disabled={comparisonLoading || !policyA || !policyB}
-            className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-accent-primary to-accent-secondary text-bg-dark font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
-          >
-            {comparisonLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-bg-dark border-t-transparent"></div>
-                Comparing Policies...
-              </span>
-            ) : (
-              'Compare Now'
-            )}
-          </button>
-
-          {error && (
-            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-              Warning: {error}
-            </div>
-          )}
-
-          {!analysesLoading && analyses.length === 0 && (
-            <div className="p-6 rounded-lg bg-card-dark/60 border border-card-border/50 text-center text-text-muted">
-              Analyze at least 2 policies before comparing
-            </div>
-          )}
-
-          {comparison && (
-            <div className="space-y-4">
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-green-500/20 via-green-500/10 to-bg-dark/40 border border-green-500/30">
-                <h3 className="font-semibold mb-3 text-green-400">Complete</h3>
-                <p className="text-sm text-text-muted mb-2">{comparison.message}</p>
-                <p className="text-xs text-text-muted break-all">{comparison.transactionHash}</p>
-                <p className="text-xs text-text-muted/60 mt-2">{comparison.completedAt}</p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-                <div className="text-xs text-text-muted uppercase tracking-widest mb-2">Divergence Score</div>
-                <div className="text-4xl font-bold text-accent-secondary mb-3">{comparison.divergence_score}/100</div>
-                <div className="text-xs text-text-muted uppercase tracking-widest mb-2">Alignment Assessment</div>
-                <p className="text-sm text-text-main">{comparison.alignment_assessment}</p>
-              </div>
-
-              {comparison.key_differences?.length > 0 && (
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-                  <h3 className="font-semibold mb-3">Key Differences</h3>
-                  <div className="space-y-2">
-                    {comparison.key_differences.map((item: string, index: number) => (
-                      <p key={`${item}-${index}`} className="text-sm text-text-main">{item}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {comparison.shared_risks?.length > 0 && (
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-                  <h3 className="font-semibold mb-3">Shared Risks</h3>
-                  <div className="space-y-2">
-                    {comparison.shared_risks.map((item: string, index: number) => (
-                      <p key={`${item}-${index}`} className="text-sm text-text-main">{item}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {comparison.harmonization_suggestions?.length > 0 && (
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-                  <h3 className="font-semibold mb-3">Harmonization Suggestions</h3>
-                  <div className="space-y-2">
-                    {comparison.harmonization_suggestions.map((item: string, index: number) => (
-                      <p key={`${item}-${index}`} className="text-sm text-text-main">{item}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-accent-secondary/20 via-accent-secondary/10 to-bg-dark/40 border border-accent-secondary/30">
-            <h3 className="font-semibold mb-3">Comparison Includes</h3>
-            <ul className="space-y-2 text-sm text-text-muted">
-              <li>Divergence Score (0-100)</li>
-              <li>Key Differences</li>
-              <li>Shared Risks</li>
-              <li>Alignment Assessment</li>
-              <li>Harmonization Suggestions</li>
-            </ul>
+          <div>
+            <label className="mb-2 block text-sm font-semibold">Vendor Review B</label>
+            <select value={reviewB} onChange={(event) => setReviewB(event.target.value)} className="field">
+              <option value="">Select another reviewed vendor...</option>
+              {reviews.map((review) => (
+                <option key={review.review_id} value={review.review_id}>
+                  {review.vendor_name} - {review.decision}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
-      </div>
+
+        <button
+          onClick={handleCompare}
+          disabled={loading || !reviewA || !reviewB}
+          className="primary-btn mt-5 w-full sm:w-auto"
+        >
+          {loading ? 'Comparing vendors...' : 'Compare Vendors'}
+        </button>
+
+        {error && (
+          <div className="mt-4 rounded-[1.2rem] border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        {comparison && (
+          <div className="mt-6 space-y-4">
+            <div className="rounded-[1.5rem] border border-edge bg-white/55 px-5 py-5">
+              <div className="eyebrow">Differentiation Score</div>
+              <div className="mt-3 text-5xl font-black text-accent-secondary">{comparison.differentiation_score}</div>
+              <p className="mt-4 text-sm leading-6 text-text-main">{comparison.recommendation}</p>
+              <div className="mt-4 text-xs text-text-muted">
+                <div>{comparison.completedAt}</div>
+                <div className="mt-1 break-all font-mono">{comparison.transactionHash}</div>
+              </div>
+            </div>
+
+            <div className="panel-soft px-5 py-5">
+              <div className="eyebrow">Decision Rationale</div>
+              <p className="mt-3 text-sm leading-7 text-text-main">{comparison.decision_rationale}</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <div className="panel-soft px-5 py-5">
+                <div className="eyebrow">Standout Strengths</div>
+                <div className="mt-3 space-y-3 text-sm leading-6 text-text-main">
+                  {comparison.standout_strengths.map((item: string, index: number) => (
+                    <p key={`${item}-${index}`}>{item}</p>
+                  ))}
+                </div>
+              </div>
+              <div className="panel-soft px-5 py-5">
+                <div className="eyebrow">Shared Exposures</div>
+                <div className="mt-3 space-y-3 text-sm leading-6 text-text-main">
+                  {comparison.shared_exposures.map((item: string, index: number) => (
+                    <p key={`${item}-${index}`}>{item}</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-5">
+        <div className="panel px-5 py-5 sm:px-6">
+          <div className="eyebrow">Ideal Use Cases</div>
+          <ul className="mt-4 space-y-3 text-sm leading-6 text-text-main">
+            <li>Choosing between similar SaaS vendors with different trust profiles.</li>
+            <li>Comparing the maturity of data processors before contract signature.</li>
+            <li>Pressure-testing whether a lower-cost vendor introduces hidden risk.</li>
+          </ul>
+        </div>
+        <div className="panel px-5 py-5 sm:px-6">
+          <div className="eyebrow">What Comes Back</div>
+          <ul className="mt-4 space-y-3 text-sm leading-6 text-text-main">
+            <li>A differentiation score for how separated the two vendors are.</li>
+            <li>Standout strengths that support a recommendation.</li>
+            <li>Shared exposures that still need contract or evidence follow-up.</li>
+            <li>A decision rationale that can go directly into approval notes.</li>
+          </ul>
+        </div>
+      </section>
     </div>
   );
 }

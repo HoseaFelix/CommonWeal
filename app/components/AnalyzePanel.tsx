@@ -2,69 +2,60 @@
 
 import { useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { useFeedbackStore } from '@/store/store';
-import { getContractAddress, getGenlayerClient, normalizeAnalysis } from '@/app/lib/genlayer';
+import { getContractAddress, getGenlayerClient, normalizeReview } from '@/app/lib/genlayer';
+import { useVendorReviewStore } from '@/store/store';
 
-type AnalysisResult = {
-  message: string;
-  transactionHash: string;
-  timestamp: string;
-};
+type ReviewRecord = ReturnType<typeof normalizeReview>;
 
-type AnalysisRecord = {
-  analysis_id: string;
-  policy_name?: string;
-  policy_text: string;
-  author: string;
-  risk_score: number | string;
-  risk_level: string;
-  summary: string;
-  risky_clauses: Array<{ clause?: string; risk?: string; reason?: string }>;
-  plain_english: string[];
-  compliance_flags: string[];
-  recommendations: string[];
-  timestamp: number | string;
-};
+function DecisionSurface({ decision }: { decision: string }) {
+  const color = decision.toLowerCase() === 'approve'
+    ? 'text-success border-success/20 bg-success/10'
+    : decision.toLowerCase() === 'conditional'
+      ? 'text-warning border-warning/20 bg-warning/10'
+      : 'text-destructive border-destructive/20 bg-destructive/10';
+
+  return <div className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${color}`}>{decision}</div>;
+}
 
 export default function AnalyzePanel() {
   const { account, walletType } = useWallet();
-  const [policyText, setPolicyText] = useState('');
-  const [policyName, setPolicyName] = useState('');
-  const [analyzeLoading, setAnalyzeLoading] = useState(false);
+  const [vendorName, setVendorName] = useState('');
+  const [serviceScope, setServiceScope] = useState('');
+  const [materials, setMaterials] = useState('');
+  const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [analysis, setAnalysis] = useState<AnalysisRecord | null>(null);
+  const [review, setReview] = useState<ReviewRecord | null>(null);
+  const [transactionHash, setTransactionHash] = useState('');
   const [error, setError] = useState('');
 
-  const handleAnalyze = async () => {
-    if (!policyText.trim()) {
-      setError('Please paste a policy before running analysis');
+  const handleReview = async () => {
+    if (!vendorName.trim() || !materials.trim()) {
+      setError('Add a vendor name and source materials before starting review.');
       return;
     }
 
-    if (!account) {
-      setError('Please connect your wallet');
+    if (!account?.address) {
+      setError('Connect a wallet before writing a review on-chain.');
       return;
     }
 
-    setAnalyzeLoading(true);
-    setStatus('Submitting to GenLayer...');
+    setLoading(true);
+    setStatus('Submitting vendor dossier to GenLayer...');
+    setReview(null);
+    setTransactionHash('');
     setError('');
-    setResult(null);
-    setAnalysis(null);
 
     try {
       const client = getGenlayerClient(account, walletType);
-      const contractAddress = getContractAddress();
-
       const txHash = await client.writeContract({
-        address: contractAddress as `0x${string}`,
-        functionName: 'analyze_policy',
-        args: [policyText.trim(), policyName.trim()],
+        address: getContractAddress(),
+        functionName: 'review_vendor',
+        args: [vendorName.trim(), serviceScope.trim(), materials.trim()],
         value: 0n,
       });
 
-      setStatus('Waiting for validator consensus...');
+      setTransactionHash(txHash);
+      setStatus('Waiting for validator consensus on vendor posture...');
 
       const receipt = await client.waitForTransactionReceipt({
         hash: txHash,
@@ -73,219 +64,198 @@ export default function AnalyzePanel() {
       });
 
       if (receipt.result !== 0 && receipt.result !== 6) {
-        throw new Error(receipt.resultName || 'Transaction failed during consensus');
+        throw new Error(receipt.resultName || 'Vendor review failed during consensus');
       }
 
-      setStatus('Fetching finalized analysis...');
+      setStatus('Loading finalized review...');
 
-      const userAnalysesResult = await client.readContract({
-        address: contractAddress as `0x${string}`,
-        functionName: 'get_user_analyses',
+      const reviewsResult = await client.readContract({
+        address: getContractAddress(),
+        functionName: 'get_user_reviews',
         args: [account.address],
       });
 
-      if (!Array.isArray(userAnalysesResult) || userAnalysesResult.length === 0) {
-        throw new Error('Analysis finalized, but no results were returned for this wallet');
+      if (!Array.isArray(reviewsResult) || reviewsResult.length === 0) {
+        throw new Error('Review completed, but no vendor review was returned.');
       }
 
-      const latestRaw = userAnalysesResult[userAnalysesResult.length - 1];
-      const latestAnalysis = normalizeAnalysis(latestRaw);
-
-      console.log('Raw user analyses result:', userAnalysesResult);
-      console.log('Normalized latest analysis:', latestAnalysis);
-
-      useFeedbackStore.setState({
-        riskScore: Number(latestAnalysis.risk_score || 0),
-        riskLevel: latestAnalysis.risk_level,
-        summary: latestAnalysis.summary,
-        riskyClauses: latestAnalysis.risky_clauses.map((item) => ({
-          clause: item.clause || '',
-          risk: item.risk || 'Medium',
-          reason: item.reason || '',
-        })),
-        plainEnglish: latestAnalysis.plain_english,
-        complianceFlags: latestAnalysis.compliance_flags,
-        recommendations: latestAnalysis.recommendations,
+      const latestReview = normalizeReview(reviewsResult[reviewsResult.length - 1]);
+      useVendorReviewStore.setState({
+        trustScore: latestReview.trust_score,
+        decision: latestReview.decision,
+        summary: latestReview.summary,
+        criticalFindings: latestReview.critical_findings,
+        strengths: latestReview.strengths,
+        followUpQuestions: latestReview.follow_up_questions,
+        recommendedControls: latestReview.recommended_controls,
       });
 
-      setAnalysis(latestAnalysis);
-      setStatus('Analysis finalized');
-      setResult({
-        message: 'Policy analysis completed successfully.',
-        transactionHash: txHash,
-        timestamp: new Date().toLocaleString(),
-      });
-      setPolicyText('');
-      setPolicyName('');
+      setReview(latestReview);
+      setStatus('Review finalized');
+      setVendorName('');
+      setServiceScope('');
+      setMaterials('');
     } catch (caughtError) {
-      console.error('Error analyzing policy:', caughtError);
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to analyze policy');
+      console.error('Error reviewing vendor:', caughtError);
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to review vendor');
       setStatus('');
     } finally {
-      setAnalyzeLoading(false);
+      setLoading(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-display mb-2">Analyze Policy</h2>
-        <p className="text-text-muted">Submit a policy for AI-powered risk analysis with validator consensus.</p>
-      </div>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+        <section className="panel px-5 py-5 sm:px-6">
+          <div className="eyebrow">Vendor Intake</div>
+          <h2 className="mt-2 font-display text-2xl">Build a Vendor Dossier</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
+            Combine trust center notes, DPA clauses, security answers, and procurement responses into
+            one due diligence package. GenLayer validators return a trust score, a decision posture,
+            critical findings, and the next questions your team should ask.
+          </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-            <label className="block text-sm font-semibold mb-3">Policy Name</label>
-            <input
-              type="text"
-              placeholder="e.g., Privacy Policy 2024, Terms of Service"
-              value={policyName}
-              onChange={(e) => setPolicyName(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-bg-dark border border-card-border/50 text-text-main placeholder-text-muted focus:outline-none focus:border-accent-primary/50 transition-all"
-            />
-          </div>
-
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-            <label className="block text-sm font-semibold mb-3">Policy Text</label>
-            <textarea
-              placeholder="Paste your policy document here..."
-              value={policyText}
-              onChange={(e) => setPolicyText(e.target.value)}
-              rows={12}
-              className="w-full px-4 py-3 rounded-lg bg-bg-dark border border-card-border/50 text-text-main placeholder-text-muted focus:outline-none focus:border-accent-primary/50 transition-all resize-none"
-            />
-            <div className="mt-2 text-xs text-text-muted">
-              {policyText.length} characters | Max 50,000
+          <div className="mt-6 space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-semibold">Vendor Name</label>
+              <input
+                type="text"
+                className="field"
+                placeholder="Example: Northwind Analytics"
+                value={vendorName}
+                onChange={(event) => setVendorName(event.target.value)}
+              />
             </div>
-          </div>
-
-          <button
-            onClick={handleAnalyze}
-            disabled={analyzeLoading || !policyText.trim()}
-            className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-accent-primary to-accent-secondary text-bg-dark font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
-          >
-            {analyzeLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-bg-dark border-t-transparent"></div>
-                {status || 'Analyzing with GenLayer Consensus...'}
-              </span>
-            ) : (
-              'Analyze Policy'
+            <div>
+              <label className="mb-2 block text-sm font-semibold">Service Scope</label>
+              <input
+                type="text"
+                className="field"
+                placeholder="Example: Customer data platform with subprocessors"
+                value={serviceScope}
+                onChange={(event) => setServiceScope(event.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-semibold">Vendor Materials</label>
+              <textarea
+                rows={14}
+                className="field resize-none"
+                placeholder="Paste questionnaire answers, security summaries, privacy promises, insurance notes, DPA excerpts, trust center claims, and any procurement context here."
+                value={materials}
+                onChange={(event) => setMaterials(event.target.value)}
+              />
+              <div className="mt-2 text-xs text-text-muted">{materials.length} characters</div>
+            </div>
+            <button
+              onClick={handleReview}
+              disabled={loading || !vendorName.trim() || !materials.trim()}
+              className="primary-btn w-full sm:w-auto"
+            >
+              {loading ? status || 'Reviewing vendor...' : 'Run Vendor Review'}
+            </button>
+            {error && (
+              <div className="rounded-[1.2rem] border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
             )}
-          </button>
+          </div>
+        </section>
 
-          {error && (
-            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-              Warning: {error}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-accent-primary/20 via-accent-primary/10 to-bg-dark/40 border border-accent-primary/30">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <span>OK</span> What You Get
-            </h3>
-            <ul className="space-y-2 text-sm text-text-muted">
-              <li>Risk Score (0-100)</li>
-              <li>Risk Level Classification</li>
-              <li>Risky Clauses Identified</li>
-              <li>Compliance Flags</li>
-              <li>Plain English Summary</li>
-              <li>Actionable Recommendations</li>
+        <section className="space-y-5">
+          <div className="panel px-5 py-5 sm:px-6">
+            <div className="eyebrow">Expected Output</div>
+            <ul className="mt-4 space-y-3 text-sm leading-6 text-text-main">
+              <li>Trust score from 0 to 100 for procurement readiness.</li>
+              <li>Decision posture: approve, conditional, or escalate.</li>
+              <li>Critical findings grouped by risk area and severity.</li>
+              <li>Follow-up questions for security, legal, or operations.</li>
+              <li>Recommended controls or evidence to request next.</li>
             </ul>
           </div>
-
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <span>Info</span> How It Works
-            </h3>
-            <ol className="space-y-2 text-sm text-text-muted">
-              <li>1. Submit your policy</li>
-              <li>2. GenLayer validators process it</li>
-              <li>3. Consensus is reached</li>
-              <li>4. The result is finalized on-chain</li>
-              <li>5. You can inspect the transaction hash</li>
-            </ol>
+          <div className="panel px-5 py-5 sm:px-6">
+            <div className="eyebrow">Best Inputs</div>
+            <ul className="mt-4 space-y-3 text-sm leading-6 text-text-main">
+              <li>Vendor security one-pager or trust center export.</li>
+              <li>DPA excerpts, breach clauses, and retention language.</li>
+              <li>Questionnaire responses from procurement or legal review.</li>
+              <li>Service architecture notes or support commitments.</li>
+            </ul>
           </div>
-
-          {result && (
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-green-500/20 via-green-500/10 to-bg-dark/40 border border-green-500/30">
-              <h3 className="font-semibold mb-3 text-green-400">Success</h3>
-              <p className="text-sm text-text-muted mb-2">{result.message}</p>
-              <p className="text-xs text-text-muted break-all">{result.transactionHash}</p>
-              <p className="text-xs text-text-muted/60 mt-2">{result.timestamp}</p>
-            </div>
-          )}
-        </div>
+        </section>
       </div>
 
-      {analysis && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-5">
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-card-dark/80 to-bg-dark/40 border border-card-border/40">
-              <div className="text-xs uppercase tracking-widest text-text-muted mb-2">Risk Score</div>
-              <div className="text-4xl font-black text-accent-primary">{Math.round(Number(analysis.risk_score || 0))}</div>
-              <div className="text-xs text-text-muted mt-3">Risk Level</div>
-              <div className="text-sm font-semibold text-text-main">{analysis.risk_level}</div>
+      {review && (
+        <section className="space-y-5">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
+            <div className="panel px-5 py-5 sm:px-6">
+              <div className="eyebrow">Trust Score</div>
+              <div className="mt-3 text-5xl font-black text-accent-primary">{review.trust_score}</div>
+              <div className="mt-4">
+                <DecisionSurface decision={review.decision} />
+              </div>
+              {transactionHash && (
+                <div className="mt-4 text-xs text-text-muted">
+                  <div className="uppercase tracking-[0.2em]">Transaction</div>
+                  <div className="mt-2 break-all font-mono">{transactionHash}</div>
+                </div>
+              )}
             </div>
-
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-card-dark/70 to-bg-dark/30 border border-card-border/40">
-              <div className="text-xs uppercase tracking-widest text-text-muted mb-2">Executive Summary</div>
-              <p className="text-sm text-text-main leading-relaxed">{analysis.summary}</p>
+            <div className="panel px-5 py-5 sm:px-6">
+              <div className="eyebrow">Consensus Summary</div>
+              <h3 className="mt-2 text-xl font-semibold">{review.vendor_name}</h3>
+              <p className="mt-1 text-sm text-text-muted">{review.service_scope}</p>
+              <p className="mt-4 text-sm leading-7 text-text-main">{review.summary}</p>
             </div>
           </div>
 
-          {analysis.risky_clauses.length > 0 && (
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-              <h3 className="text-lg font-semibold mb-4">Risky Clauses</h3>
-              <div className="space-y-3">
-                {analysis.risky_clauses.map((item, index) => (
-                  <div key={`${item.clause}-${index}`} className="p-4 rounded-xl bg-red-500/5 border border-red-500/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs uppercase tracking-widest text-text-muted">Clause {index + 1}</span>
-                      <span className="text-[10px] px-2 py-1 rounded-full bg-red-500/10 text-red-400 uppercase tracking-widest">{item.risk}</span>
+          {review.critical_findings.length > 0 && (
+            <div className="panel px-5 py-5 sm:px-6">
+              <div className="eyebrow">Critical Findings</div>
+              <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+                {review.critical_findings.map((finding, index) => (
+                  <article key={`${finding.area}-${index}`} className="rounded-[1.3rem] border border-edge bg-white/60 px-4 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <h4 className="font-semibold">{finding.area}</h4>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs uppercase tracking-[0.18em] text-text-muted">
+                        {finding.severity}
+                      </span>
                     </div>
-                    <p className="text-sm text-text-main">{item.clause}</p>
-                    {item.reason && <p className="text-xs text-text-muted mt-2">Reason: {item.reason}</p>}
-                  </div>
+                    <p className="mt-3 text-sm leading-6 text-text-main">{finding.rationale}</p>
+                  </article>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-              <h3 className="text-lg font-semibold mb-4">Plain English</h3>
-              <div className="space-y-2">
-                {analysis.plain_english.map((item, index) => (
-                  <p key={`${item}-${index}`} className="text-sm text-text-main">{item}</p>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="panel px-5 py-5 sm:px-6">
+              <div className="eyebrow">Strengths</div>
+              <div className="mt-4 space-y-3 text-sm leading-6 text-text-main">
+                {review.strengths.map((item, index) => (
+                  <p key={`${item}-${index}`}>{item}</p>
                 ))}
               </div>
             </div>
-
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-              <h3 className="text-lg font-semibold mb-4">Compliance Flags</h3>
-              <div className="flex flex-wrap gap-2">
-                {analysis.compliance_flags.map((flag, index) => (
-                  <span key={`${flag}-${index}`} className="text-[11px] px-3 py-1 rounded-full border border-card-border/60 bg-card-dark/60 text-text-main">
-                    {flag}
-                  </span>
+            <div className="panel px-5 py-5 sm:px-6">
+              <div className="eyebrow">Follow-up Questions</div>
+              <div className="mt-4 space-y-3 text-sm leading-6 text-text-main">
+                {review.follow_up_questions.map((item, index) => (
+                  <p key={`${item}-${index}`}>{item}</p>
                 ))}
               </div>
             </div>
-
-            <div className="p-6 rounded-2xl bg-gradient-to-br from-card-dark/80 via-card-dark to-bg-dark/40 border border-card-border/50">
-              <h3 className="text-lg font-semibold mb-4">Recommendations</h3>
-              <div className="space-y-2">
-                {analysis.recommendations.map((item, index) => (
-                  <p key={`${item}-${index}`} className="text-sm text-text-main">{item}</p>
+            <div className="panel px-5 py-5 sm:px-6">
+              <div className="eyebrow">Recommended Controls</div>
+              <div className="mt-4 space-y-3 text-sm leading-6 text-text-main">
+                {review.recommended_controls.map((item, index) => (
+                  <p key={`${item}-${index}`}>{item}</p>
                 ))}
               </div>
             </div>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

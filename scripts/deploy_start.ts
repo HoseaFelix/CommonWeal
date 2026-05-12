@@ -14,10 +14,7 @@ const GENLAYER_CHAIN = defineChain({
 });
 
 async function main() {
-    // 1. Get Wallet
-    // NOTE: This private key must have GEN tokens!
-    // I will look for a private key in env or ask user. 
-    // For now I'll use a placeholder or read from env
+    // The deployment wallet must hold enough GEN for contract deployment.
     const PRIVATE_KEY = process.env.PRIVATE_KEY;
     if (!PRIVATE_KEY) {
         console.error("Please set PRIVATE_KEY in .env");
@@ -31,26 +28,21 @@ async function main() {
         transport: http()
     });
 
-    // 2. Read Contract Source
-    const contractPath = path.resolve(__dirname, '../genlayer_contracts/complianceHub.py');
+    const contractPath = path.resolve(__dirname, '../genlayer_contracts/vendorTrustLedger.py');
     const contractSource = fs.readFileSync(contractPath, 'utf8');
 
     console.log(`Deploying contract from ${contractPath}...`);
 
-    // 3. Deploy
-    // For GenLayer, we send a transaction with data = hex encoded source
+    // Deploy the raw contract source as hex-encoded bytecode.
     const hash = await client.deployContract({
-        abi: [], // ABI not needed for deployment of raw source
-        // For GenLayer, bytecode IS the hex-encoded source string.
+        abi: [],
         bytecode: `0x${Buffer.from(contractSource, 'utf8').toString('hex')}`,
         args: [],
-        account, // Account must be explicitly passed
-        chain: GENLAYER_CHAIN // Chain must also be explicitly passed
+        account,
+        chain: GENLAYER_CHAIN
     });
 
     console.log("Deployment Tx Hash:", hash);
-    // We need a public client to wait for receipt
-    // ...
 }
 
 main().catch(console.error);

@@ -8,89 +8,95 @@ import BenchmarkPanel from "./components/BenchmarkPanel";
 import AuditPanel from "./components/AuditPanel";
 import ReportsPanel from "./components/ReportsPanel";
 
-type Tab = 'dashboard' | 'analyze' | 'compare' | 'benchmark' | 'audit' | 'reports';
+type Tab = 'overview' | 'intake' | 'compare' | 'frameworks' | 'activity' | 'briefing';
+
+const tabs: Array<{ id: Tab; label: string }> = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'intake', label: 'Vendor Intake' },
+  { id: 'compare', label: 'Compare' },
+  { id: 'frameworks', label: 'Frameworks' },
+  { id: 'activity', label: 'Activity' },
+  { id: 'briefing', label: 'Briefing' },
+];
+
+function LedgerMark() {
+  return (
+    <svg viewBox="0 0 160 160" className="h-14 w-14" fill="none" aria-hidden="true">
+      <rect x="16" y="16" width="128" height="128" rx="30" stroke="currentColor" strokeWidth="7" />
+      <path d="M50 54h60M50 80h60M50 106h36" stroke="currentColor" strokeWidth="7" strokeLinecap="round" />
+      <path d="M106 104l10 10 20-28" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SignalBand() {
+  return (
+    <svg viewBox="0 0 320 80" className="h-14 w-full max-w-[320px]" fill="none" aria-hidden="true">
+      <path d="M1 40h58l16-18 24 38 22-28 18 14 31-26 20 17h129" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="75" cy="22" r="6" fill="currentColor" />
+      <circle cx="170" cy="20" r="6" fill="currentColor" />
+      <circle cx="219" cy="37" r="6" fill="currentColor" />
+    </svg>
+  );
+}
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
-
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M5 9h3V4H5v5zm5 0h3V2H10v7zm5 0h3V6h-3v3z"/></svg> },
-    { id: 'analyze', label: 'Analyze Policy', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg> },
-    { id: 'compare', label: 'Compare', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M9 14H2v2h7v-2zm6-2H2v2h13V12zm0-6H2v2h13V6z"/></svg> },
-    { id: 'benchmark', label: 'Benchmark', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg> },
-    { id: 'audit', label: 'Audit Trail', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg> },
-    { id: 'reports', label: 'Reports', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM9 7h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2z"/></svg> },
-  ] as const;
+  const [activeTab, setActiveTab] = useState<Tab>('overview');
 
   return (
-    <main className="min-h-screen bg-bg-dark text-text-main flex flex-col font-body relative overflow-hidden selection:bg-accent-primary/20">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-40 -right-32 h-[420px] w-[420px] rounded-full bg-accent-primary/10 blur-3xl animate-pulse" />
-        <div className="absolute top-1/3 -left-32 h-[320px] w-[320px] rounded-full bg-accent-secondary/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-[-120px] right-1/4 h-[360px] w-[360px] rounded-full bg-accent-tertiary/10 blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-      </div>
+    <main className="min-h-screen text-text-main selection:bg-accent-primary/15">
+      <div className="mx-auto max-w-[1500px] px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+        <div className="panel paper-grid relative overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(90deg,rgba(150,81,55,0.12),transparent_35%,rgba(49,91,87,0.12))]" />
+          <nav className="relative flex flex-col gap-6 border-b border-edge/70 px-5 py-5 sm:px-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="rounded-[1.8rem] border border-edge/80 bg-panel p-3 text-accent-primary shadow-[0_12px_24px_rgba(47,35,26,0.08)]">
+                <LedgerMark />
+              </div>
+              <div>
+                <div className="eyebrow">GenLayer Vendor Due Diligence</div>
+                <h1 className="mt-2 font-display text-3xl sm:text-4xl">VendorLens</h1>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted sm:text-base">
+                  A procurement workspace for reviewing vendor materials, comparing decision readiness,
+                  measuring framework coverage, and publishing defensible approval briefs on-chain.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-start gap-3 lg:items-end">
+              <div className="hidden text-accent-secondary sm:block">
+                <SignalBand />
+              </div>
+              <WalletButton />
+            </div>
+          </nav>
 
-      {/* Top Navigation */}
-      <nav className="w-full px-6 py-4 flex justify-between items-center border-b border-card-border/30 bg-card-dark/20 backdrop-blur-xl sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-accent-primary via-accent-secondary to-accent-tertiary flex items-center justify-center text-bg-dark font-bold shadow-lg relative overflow-hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 relative z-10" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l8 3v7c0 5.55-3.84 10.74-9 12-5.16-1.26-9-6.45-9-12V5l8-3z"/>
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-2xl font-display tracking-tight">ComplianceHub</h1>
-            <div className="text-[10px] text-text-muted uppercase tracking-[0.3em] hidden sm:block font-semibold">
-              Enterprise Risk & Compliance Platform
+          <div className="border-b border-edge/70 px-3 py-3 sm:px-6">
+            <div className="flex gap-2 overflow-x-auto">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`rounded-full px-4 py-2.5 text-sm font-semibold transition ${
+                    activeTab === tab.id
+                      ? 'bg-accent-secondary text-[#f6f0e7] shadow-[0_10px_22px_rgba(49,91,87,0.18)]'
+                      : 'bg-white/55 text-text-muted hover:bg-white/85 hover:text-text-main'
+                  }`}
+                  style={{ animationDelay: `${index * 80}ms` }}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-        <WalletButton />
-      </nav>
 
-      {/* Tab Navigation */}
-      <div className="w-full border-b border-card-border/30 bg-card-dark/10 backdrop-blur-sm sticky top-[73px] z-40">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-1 overflow-x-auto">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 border-b-2 transition-all whitespace-nowrap text-sm font-medium flex items-center gap-2 ${
-                  activeTab === tab.id
-                    ? 'border-accent-primary text-accent-primary'
-                    : 'border-transparent text-text-muted hover:text-text-main hover:border-accent-primary/50'
-                }`}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
+          <div className="px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+            {activeTab === 'overview' && <Dashboard />}
+            {activeTab === 'intake' && <AnalyzePanel />}
+            {activeTab === 'compare' && <ComparisonPanel />}
+            {activeTab === 'frameworks' && <BenchmarkPanel />}
+            {activeTab === 'activity' && <AuditPanel />}
+            {activeTab === 'briefing' && <ReportsPanel />}
           </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 relative overflow-y-auto">
-        <div className="max-w-[1400px] mx-auto">
-          {activeTab === 'dashboard' && <Dashboard />}
-          {activeTab === 'analyze' && <AnalyzePanel />}
-          {activeTab === 'compare' && <ComparisonPanel />}
-          {activeTab === 'benchmark' && <BenchmarkPanel />}
-          {activeTab === 'audit' && <AuditPanel />}
-          {activeTab === 'reports' && <ReportsPanel />}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="w-full border-t border-card-border/30 bg-card-dark/20 backdrop-blur-sm py-6">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center gap-2">
-          <span className="text-sm text-text-muted">Powered by</span>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-accent-primary/10 to-accent-tertiary/10 border border-accent-primary/30">
-            <div className="w-4 h-4 rounded-full bg-gradient-to-br from-accent-primary to-accent-tertiary"></div>
-            <span className="text-sm font-semibold text-accent-primary">GenLayer</span>
-          </div>
-          <span className="text-xs text-text-muted/60 ml-2">• Decentralized Intelligence</span>
         </div>
       </div>
     </main>

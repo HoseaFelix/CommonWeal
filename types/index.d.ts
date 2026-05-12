@@ -1,30 +1,30 @@
 import { z } from "zod";
-import { policySchema } from "@/constants/constant";
+import { vendorReviewSchema } from "@/constants/constant";
 
-export type PolicyFeedback = z.infer<typeof policySchema>;
+export type VendorReviewFeedback = z.infer<typeof vendorReviewSchema>;
 
-export interface RiskyClause {
-  clause: string
-  risk: string
-  reason?: string
+export interface CriticalFinding {
+  area: string
+  severity: string
+  rationale: string
 }
 
-export interface PolicyData {
-  riskScore: number
-  riskLevel: string
+export interface VendorReviewData {
+  trustScore: number
+  decision: string
   summary: string
-  riskyClauses: RiskyClause[]
-  plainEnglish: string[]
-  complianceFlags: string[]
-  recommendations: string[]
-}
-
-export interface FeedbackErrorState {
-  error: string | null
+  criticalFindings: CriticalFinding[]
+  strengths: string[]
+  followUpQuestions: string[]
+  recommendedControls: string[]
 }
 
 declare global {
+  interface EthereumProvider {
+    request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  }
+
   interface Window {
-    ethereum?: any;
+    ethereum?: EthereumProvider;
   }
 }

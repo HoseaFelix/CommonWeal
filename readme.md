@@ -1,45 +1,37 @@
-# ComplianceHub
+# VendorLens
 
-ComplianceHub is an enterprise compliance platform on GenLayer for policy risk analysis, comparison, benchmarking, auditability, and reporting.
+VendorLens is a GenLayer workspace for third-party vendor due diligence. Teams can review vendor materials, compare vendors head to head, benchmark evidence against trust frameworks, and publish concise approval briefings on-chain.
 
-## Features
+## What It Does
 
-- Policy risk analysis with clause-level findings
-- Policy-to-policy comparison
-- Benchmarking against GDPR, CCPA, ISO 27001, and HIPAA
-- Immutable audit trail
-- Portfolio-level compliance reporting
+- Reviews vendor materials and returns a trust score plus decision posture
+- Compares two reviewed vendors for differentiation and shared exposure
+- Benchmarks a vendor against SOC 2, ISO 27001, GDPR, or HIPAA expectations
+- Generates a portfolio-level due diligence briefing
+- Records all actions in a durable activity ledger
 
 ## Core Contract
 
-- File: `genlayer_contracts/complianceHub.py`
-- Class: `ComplianceHub`
+- File: `genlayer_contracts/vendorTrustLedger.py`
+- Class: `VendorTrustLedger`
 
-## Main Workflows
+## Frontend Areas
 
-1. Analyze a policy and store the result on-chain
-2. Compare two prior analyses
-3. Benchmark a policy against a compliance standard
-4. Generate a workspace compliance report
+- `Overview`: portfolio snapshot of reviewed vendors
+- `Vendor Intake`: submit materials for a new review
+- `Compare`: weigh two vendors against each other
+- `Frameworks`: benchmark a vendor against a trust framework
+- `Activity`: inspect the permanent decision ledger
+- `Briefing`: generate a summary report
 
-## Frontend
-
-The Next.js frontend provides tabs for:
-
-- Dashboard
-- Analyze
-- Compare
-- Benchmark
-- Audit Trail
-- Reports
-
-## Installation
+## Run Locally
 
 ```bash
 npm install
+npm run dev
 ```
 
-Create `.env.local`:
+Set `.env.local` before using the app:
 
 ```env
 NEXT_PUBLIC_CONTRACT_ADDRESS=0x...
@@ -47,26 +39,18 @@ NEXT_PUBLIC_GENLAYER_CHAIN_ID=62255
 NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 ```
 
-## Run Locally
-
-```bash
-npm run dev
-```
-
-Open `http://localhost:3000`.
-
 ## Deploy The Contract
 
-Upload `genlayer_contracts/complianceHub.py` to GenLayer Studio, deploy it, and set the resulting address in `.env.local`.
+Upload `genlayer_contracts/vendorTrustLedger.py` to GenLayer Studio, deploy it, and place the new address in `.env.local`.
 
-## Tech Stack
+## Stack
 
 - Next.js 16
 - React 19
 - TypeScript
 - Tailwind CSS 4
-- Wagmi 3
-- viem 2
+- Wagmi
+- viem
 - GenLayer
 
 ## License
