@@ -1,20 +1,20 @@
-# VendorLens Quick Start
+# Commonweal Quick Start
 
 ## Project Shape
 
-VendorLens is a procurement-facing due diligence app built on GenLayer. It helps a team answer one practical question: should we trust this vendor enough to move forward?
+Commonweal is a grant allocation app built on GenLayer. It helps a funding committee answer one practical question: is this application ready for capital release?
 
 ## Main Flows
 
-1. Review a vendor dossier
-2. Compare two reviewed vendors
-3. Benchmark a vendor against a framework
-4. Generate a due diligence briefing
+1. Review an application packet
+2. Compare two reviewed applicants
+3. Benchmark a proposal against a rubric
+4. Generate a funding memo
 
 ## Main Contract
 
-- File: `genlayer_contracts/vendorTrustLedger.py`
-- Class: `VendorTrustLedger`
+- File: `genlayer_contracts/grantCouncilLedger.py`
+- Class: `GrantCouncilLedger`
 
 ## Setup
 
@@ -33,7 +33,7 @@ NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 ## Deploy
 
 1. Open `https://studio.genlayer.com`
-2. Upload `genlayer_contracts/vendorTrustLedger.py`
+2. Upload `genlayer_contracts/grantCouncilLedger.py`
 3. Deploy the contract
 4. Copy the resulting address into `.env.local`
 

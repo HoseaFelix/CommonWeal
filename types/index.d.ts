@@ -1,22 +1,22 @@
 import { z } from "zod";
-import { vendorReviewSchema } from "@/constants/constant";
+import { grantApplicationSchema } from "@/constants/constant";
 
-export type VendorReviewFeedback = z.infer<typeof vendorReviewSchema>;
+export type GrantApplicationFeedback = z.infer<typeof grantApplicationSchema>;
 
-export interface CriticalFinding {
+export interface RiskFlag {
   area: string
   severity: string
   rationale: string
 }
 
-export interface VendorReviewData {
-  trustScore: number
-  decision: string
-  summary: string
-  criticalFindings: CriticalFinding[]
+export interface GrantApplicationData {
+  viabilityScore: number
+  recommendation: string
+  thesis: string
+  riskFlags: RiskFlag[]
   strengths: string[]
-  followUpQuestions: string[]
-  recommendedControls: string[]
+  diligenceQuestions: string[]
+  milestoneConditions: string[]
 }
 
 declare global {

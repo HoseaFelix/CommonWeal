@@ -1,27 +1,28 @@
-'use client'
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { getContractAddress, getGenlayerClient, normalizeActivityEntry } from '@/app/lib/genlayer';
+import { getContractAddress, getGenlayerClient, normalizeLedgerEntry } from '@/app/lib/genlayer';
 
-type ActivityRecord = ReturnType<typeof normalizeActivityEntry>;
+type LedgerRecord = ReturnType<typeof normalizeLedgerEntry>;
 
 const ACTION_LABELS: Record<string, string> = {
-  REVIEW_CREATED: 'Vendor review recorded',
-  COMPARISON_CREATED: 'Vendor comparison recorded',
-  BENCHMARK_CREATED: 'Framework benchmark recorded',
-  REPORT_CREATED: 'Diligence report recorded',
+  APPLICATION_REVIEWED: 'Application reviewed',
+  APPLICATIONS_COMPARED: 'Applicants compared',
+  RUBRIC_BENCHMARKED: 'Rubric benchmark recorded',
+  FUNDING_MEMO_CREATED: 'Funding memo generated',
 };
 
 export default function AuditPanel() {
   const { account, walletType } = useWallet();
-  const [activity, setActivity] = useState<ActivityRecord[]>([]);
+  const [entries, setEntries] = useState<LedgerRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('ALL');
 
   useEffect(() => {
-    const loadActivity = async () => {
+    const loadEntries = async () => {
       if (!account?.address) {
-        setActivity([]);
+        setEntries([]);
         return;
       }
 
@@ -30,34 +31,34 @@ export default function AuditPanel() {
         const client = getGenlayerClient(account, walletType);
         const result = await client.readContract({
           address: getContractAddress(),
-          functionName: 'get_user_activity',
+          functionName: 'get_user_ledger_entries',
           args: [account.address],
         });
 
-        setActivity(Array.isArray(result) ? result.map((item) => normalizeActivityEntry(item)) : []);
+        setEntries(Array.isArray(result) ? result.map((item) => normalizeLedgerEntry(item)) : []);
       } catch (caughtError) {
-        console.error('Failed to load activity log:', caughtError);
-        setActivity([]);
+        console.error('Failed to load ledger entries:', caughtError);
+        setEntries([]);
       } finally {
         setLoading(false);
       }
     };
 
-    void loadActivity();
+    void loadEntries();
   }, [account, walletType]);
 
-  const actions = ['ALL', ...new Set(activity.map((entry) => entry.action))];
-  const visibleEntries = filter === 'ALL' ? activity : activity.filter((entry) => entry.action === filter);
+  const actions = ['ALL', ...new Set(entries.map((entry) => entry.action))];
+  const visibleEntries = filter === 'ALL' ? entries : entries.filter((entry) => entry.action === filter);
 
   return (
     <div className="space-y-5">
-      <section className="panel px-5 py-5 sm:px-6">
-        <div className="eyebrow">Permanent Activity</div>
-        <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <section className="section-card">
+        <div className="section-kicker">Immutable Trail</div>
+        <div className="mt-2 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <h2 className="font-display text-2xl">Decision Ledger</h2>
-            <p className="mt-2 text-sm leading-6 text-text-muted">
-              Every review, comparison, benchmark, and briefing is recorded with a durable activity entry.
+            <h2 className="section-title">Council Ledger</h2>
+            <p className="section-copy">
+              Every review, matchup, benchmark, and memo is written into a durable operational record.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -65,13 +66,9 @@ export default function AuditPanel() {
               <button
                 key={action}
                 onClick={() => setFilter(action)}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  filter === action
-                    ? 'bg-accent-primary text-[#fff8f1]'
-                    : 'bg-white/60 text-text-muted hover:bg-white hover:text-text-main'
-                }`}
+                className={`filter-chip ${filter === action ? 'filter-chip-active' : ''}`}
               >
-                {action === 'ALL' ? 'All activity' : ACTION_LABELS[action] || action}
+                {action === 'ALL' ? 'All entries' : ACTION_LABELS[action] || action}
               </button>
             ))}
           </div>
@@ -79,39 +76,37 @@ export default function AuditPanel() {
       </section>
 
       {loading ? (
-        <div className="flex justify-center py-14">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-accent-primary/30 border-t-accent-primary" />
+        <div className="flex justify-center py-16">
+          <div className="loader-ring" />
         </div>
       ) : visibleEntries.length === 0 ? (
-        <div className="panel px-6 py-12 text-center text-sm text-text-muted">
-          No activity entries are available for this wallet yet.
-        </div>
+        <div className="empty-state">No ledger entries are available for this wallet yet.</div>
       ) : (
         <div className="space-y-3">
           {visibleEntries.map((entry) => (
-            <article key={entry.entry_id} className="panel-soft px-5 py-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <article key={entry.entry_id} className="record-card">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <div className="text-sm font-semibold">{ACTION_LABELS[entry.action] || entry.action}</div>
-                  <p className="mt-2 text-sm leading-6 text-text-main">{entry.details}</p>
+                  <div className="text-sm font-semibold uppercase tracking-[0.18em] text-accent-gold">
+                    {ACTION_LABELS[entry.action] || entry.action}
+                  </div>
+                  <p className="mt-2 text-sm leading-7 text-ink-main">{entry.details}</p>
                 </div>
-                <div className="rounded-full bg-white px-3 py-1 text-xs uppercase tracking-[0.18em] text-text-muted">
-                  #{entry.timestamp}
-                </div>
+                <div className="signal-chip">#{entry.timestamp}</div>
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-3 border-t border-edge/70 pt-4 text-xs sm:grid-cols-3">
+              <div className="mt-5 grid grid-cols-1 gap-4 border-t border-white/10 pt-5 text-xs sm:grid-cols-3">
                 <div>
-                  <div className="text-text-muted">Resource</div>
-                  <div className="mt-1 break-all font-mono text-text-main">{entry.resource_id}</div>
+                  <div className="metric-label">Resource</div>
+                  <div className="mt-1 break-all font-mono text-ink-main">{entry.resource_id}</div>
                 </div>
                 <div>
-                  <div className="text-text-muted">Author</div>
-                  <div className="mt-1 break-all font-mono text-text-main">{entry.author}</div>
+                  <div className="metric-label">Author</div>
+                  <div className="mt-1 break-all font-mono text-ink-main">{entry.author}</div>
                 </div>
                 <div>
-                  <div className="text-text-muted">Action</div>
-                  <div className="mt-1 text-text-main">{entry.action}</div>
+                  <div className="metric-label">Action</div>
+                  <div className="mt-1 text-ink-main">{entry.action}</div>
                 </div>
               </div>
             </article>

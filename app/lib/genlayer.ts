@@ -11,51 +11,52 @@ type WalletAccount = {
   privateKey?: string;
 };
 
-const REVIEW_KEYS = [
-  'review_id',
-  'vendor_name',
-  'service_scope',
-  'materials',
+const APPLICATION_KEYS = [
+  'application_id',
+  'applicant_name',
+  'project_title',
+  'funding_request',
+  'application_materials',
   'author',
-  'trust_score',
-  'decision',
-  'summary',
-  'critical_findings',
+  'viability_score',
+  'recommendation',
+  'thesis',
+  'risk_flags',
   'strengths',
-  'follow_up_questions',
-  'recommended_controls',
+  'diligence_questions',
+  'milestone_conditions',
   'timestamp',
 ] as const;
 
-const FINDING_KEYS = ['area', 'severity', 'rationale'] as const;
+const RISK_FLAG_KEYS = ['area', 'severity', 'rationale'] as const;
 
 const COMPARISON_KEYS = [
   'comparison_id',
-  'review_a_id',
-  'review_b_id',
+  'application_a_id',
+  'application_b_id',
   'author',
-  'differentiation_score',
-  'standout_strengths',
-  'shared_exposures',
-  'recommendation',
-  'decision_rationale',
+  'separation_score',
+  'unique_advantages',
+  'overlapping_risks',
+  'allocation_recommendation',
+  'rationale',
   'timestamp',
 ] as const;
 
 const BENCHMARK_KEYS = [
   'benchmark_id',
-  'review_id',
+  'application_id',
   'author',
-  'framework_type',
-  'coverage_score',
+  'rubric_type',
+  'alignment_score',
   'uncovered_gaps',
   'evidence_signals',
-  'remediation_priority',
-  'approval_posture',
+  'diligence_priority',
+  'release_posture',
   'timestamp',
 ] as const;
 
-const ACTIVITY_KEYS = [
+const LEDGER_KEYS = [
   'entry_id',
   'resource_id',
   'author',
@@ -64,15 +65,15 @@ const ACTIVITY_KEYS = [
   'details',
 ] as const;
 
-const REPORT_KEYS = [
-  'report_id',
+const MEMO_KEYS = [
+  'memo_id',
   'workspace_owner',
   'author',
-  'total_vendors',
-  'average_trust_score',
-  'escalated_count',
+  'total_applications',
+  'average_viability_score',
+  'decline_count',
   'conditional_count',
-  'portfolio_posture',
+  'portfolio_signal',
   'key_actions',
   'generated_at',
 ] as const;
@@ -141,13 +142,13 @@ export function normalizeStringList(value: unknown) {
   return value.map((item) => String(item));
 }
 
-export function normalizeFindings(value: unknown) {
+export function normalizeRiskFlags(value: unknown) {
   if (!Array.isArray(value)) {
     return [];
   }
 
   return value.map((item) => {
-    const record = toPlainObject(item, FINDING_KEYS);
+    const record = toPlainObject(item, RISK_FLAG_KEYS);
     return {
       area: String(record.area ?? ''),
       severity: String(record.severity ?? 'Medium'),
@@ -156,22 +157,23 @@ export function normalizeFindings(value: unknown) {
   });
 }
 
-export function normalizeReview(rawValue: unknown) {
-  const raw = toPlainObject(rawValue, REVIEW_KEYS);
+export function normalizeApplication(rawValue: unknown) {
+  const raw = toPlainObject(rawValue, APPLICATION_KEYS);
 
   return {
-    review_id: String(raw.review_id ?? ''),
-    vendor_name: String(raw.vendor_name ?? ''),
-    service_scope: String(raw.service_scope ?? ''),
-    materials: String(raw.materials ?? ''),
+    application_id: String(raw.application_id ?? ''),
+    applicant_name: String(raw.applicant_name ?? ''),
+    project_title: String(raw.project_title ?? ''),
+    funding_request: String(raw.funding_request ?? ''),
+    application_materials: String(raw.application_materials ?? ''),
     author: String(raw.author ?? ''),
-    trust_score: Number(raw.trust_score ?? 0),
-    decision: String(raw.decision ?? ''),
-    summary: String(raw.summary ?? ''),
-    critical_findings: normalizeFindings(raw.critical_findings ?? []),
+    viability_score: Number(raw.viability_score ?? 0),
+    recommendation: String(raw.recommendation ?? ''),
+    thesis: String(raw.thesis ?? ''),
+    risk_flags: normalizeRiskFlags(raw.risk_flags ?? []),
     strengths: normalizeStringList(raw.strengths ?? []),
-    follow_up_questions: normalizeStringList(raw.follow_up_questions ?? []),
-    recommended_controls: normalizeStringList(raw.recommended_controls ?? []),
+    diligence_questions: normalizeStringList(raw.diligence_questions ?? []),
+    milestone_conditions: normalizeStringList(raw.milestone_conditions ?? []),
     timestamp: String(raw.timestamp ?? ''),
   };
 }
@@ -181,14 +183,14 @@ export function normalizeComparison(rawValue: unknown) {
 
   return {
     comparison_id: String(raw.comparison_id ?? ''),
-    review_a_id: String(raw.review_a_id ?? ''),
-    review_b_id: String(raw.review_b_id ?? ''),
+    application_a_id: String(raw.application_a_id ?? ''),
+    application_b_id: String(raw.application_b_id ?? ''),
     author: String(raw.author ?? ''),
-    differentiation_score: Number(raw.differentiation_score ?? 0),
-    standout_strengths: normalizeStringList(raw.standout_strengths ?? []),
-    shared_exposures: normalizeStringList(raw.shared_exposures ?? []),
-    recommendation: String(raw.recommendation ?? ''),
-    decision_rationale: String(raw.decision_rationale ?? ''),
+    separation_score: Number(raw.separation_score ?? 0),
+    unique_advantages: normalizeStringList(raw.unique_advantages ?? []),
+    overlapping_risks: normalizeStringList(raw.overlapping_risks ?? []),
+    allocation_recommendation: String(raw.allocation_recommendation ?? ''),
+    rationale: String(raw.rationale ?? ''),
     timestamp: String(raw.timestamp ?? ''),
   };
 }
@@ -198,20 +200,20 @@ export function normalizeBenchmark(rawValue: unknown) {
 
   return {
     benchmark_id: String(raw.benchmark_id ?? ''),
-    review_id: String(raw.review_id ?? ''),
+    application_id: String(raw.application_id ?? ''),
     author: String(raw.author ?? ''),
-    framework_type: String(raw.framework_type ?? ''),
-    coverage_score: Number(raw.coverage_score ?? 0),
+    rubric_type: String(raw.rubric_type ?? ''),
+    alignment_score: Number(raw.alignment_score ?? 0),
     uncovered_gaps: normalizeStringList(raw.uncovered_gaps ?? []),
     evidence_signals: normalizeStringList(raw.evidence_signals ?? []),
-    remediation_priority: String(raw.remediation_priority ?? ''),
-    approval_posture: String(raw.approval_posture ?? ''),
+    diligence_priority: String(raw.diligence_priority ?? ''),
+    release_posture: String(raw.release_posture ?? ''),
     timestamp: String(raw.timestamp ?? ''),
   };
 }
 
-export function normalizeActivityEntry(rawValue: unknown) {
-  const raw = toPlainObject(rawValue, ACTIVITY_KEYS);
+export function normalizeLedgerEntry(rawValue: unknown) {
+  const raw = toPlainObject(rawValue, LEDGER_KEYS);
 
   return {
     entry_id: String(raw.entry_id ?? ''),
@@ -223,18 +225,18 @@ export function normalizeActivityEntry(rawValue: unknown) {
   };
 }
 
-export function normalizeReport(rawValue: unknown) {
-  const raw = toPlainObject(rawValue, REPORT_KEYS);
+export function normalizeMemo(rawValue: unknown) {
+  const raw = toPlainObject(rawValue, MEMO_KEYS);
 
   return {
-    report_id: String(raw.report_id ?? ''),
+    memo_id: String(raw.memo_id ?? ''),
     workspace_owner: String(raw.workspace_owner ?? ''),
     author: String(raw.author ?? ''),
-    total_vendors: Number(raw.total_vendors ?? 0),
-    average_trust_score: Number(raw.average_trust_score ?? 0),
-    escalated_count: Number(raw.escalated_count ?? 0),
+    total_applications: Number(raw.total_applications ?? 0),
+    average_viability_score: Number(raw.average_viability_score ?? 0),
+    decline_count: Number(raw.decline_count ?? 0),
     conditional_count: Number(raw.conditional_count ?? 0),
-    portfolio_posture: String(raw.portfolio_posture ?? ''),
+    portfolio_signal: String(raw.portfolio_signal ?? ''),
     key_actions: normalizeStringList(raw.key_actions ?? []),
     generated_at: String(raw.generated_at ?? ''),
   };

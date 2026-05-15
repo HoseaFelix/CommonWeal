@@ -1,23 +1,24 @@
-'use client'
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { getContractAddress, getGenlayerClient, normalizeReport } from '@/app/lib/genlayer';
+import { getContractAddress, getGenlayerClient, normalizeMemo } from '@/app/lib/genlayer';
 
-type ReportRecord = ReturnType<typeof normalizeReport>;
+type MemoRecord = ReturnType<typeof normalizeMemo>;
 
 export default function ReportsPanel() {
   const { account, walletType } = useWallet();
-  const [report, setReport] = useState<(ReportRecord & { transactionHash: string; completedAt: string }) | null>(null);
+  const [memo, setMemo] = useState<(MemoRecord & { transactionHash: string; completedAt: string }) | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    setReport(null);
+    setMemo(null);
   }, [account?.address]);
 
-  const handleGenerateReport = async () => {
+  const handleGenerateMemo = async () => {
     if (!account?.address) {
-      setError('Connect a wallet before generating a briefing.');
+      setError('Connect a wallet before generating a funding memo.');
       return;
     }
 
@@ -28,7 +29,7 @@ export default function ReportsPanel() {
       const client = getGenlayerClient(account, walletType);
       const txHash = await client.writeContract({
         address: getContractAddress(),
-        functionName: 'generate_due_diligence_report',
+        functionName: 'generate_funding_memo',
         args: [],
         value: 0n,
       });
@@ -40,45 +41,45 @@ export default function ReportsPanel() {
       });
 
       if (receipt.result !== 0 && receipt.result !== 6) {
-        throw new Error(receipt.resultName || 'Report generation failed during consensus');
+        throw new Error(receipt.resultName || 'Funding memo failed during consensus');
       }
 
-      const activityResult = await client.readContract({
+      const ledgerResult = await client.readContract({
         address: getContractAddress(),
-        functionName: 'get_user_activity',
+        functionName: 'get_user_ledger_entries',
         args: [account.address],
       });
 
-      if (!Array.isArray(activityResult) || activityResult.length === 0) {
-        throw new Error('Report completed, but no activity entries were returned.');
+      if (!Array.isArray(ledgerResult) || ledgerResult.length === 0) {
+        throw new Error('Memo completed, but no ledger entries were returned.');
       }
 
-      const reportEntry = [...activityResult].reverse().find((entry) => {
+      const memoEntry = [...ledgerResult].reverse().find((entry) => {
         const raw = entry instanceof Map ? Object.fromEntries(entry) : entry as Record<string, unknown>;
-        return String(raw.action ?? raw[3] ?? '') === 'REPORT_CREATED';
+        return String(raw.action ?? raw[3] ?? '') === 'FUNDING_MEMO_CREATED';
       });
 
-      if (!reportEntry) {
-        throw new Error('Report completed, but no report entry was found.');
+      if (!memoEntry) {
+        throw new Error('Memo completed, but no memo entry was found.');
       }
 
-      const rawEntry = reportEntry instanceof Map ? Object.fromEntries(reportEntry) : reportEntry as Record<string, unknown>;
-      const reportId = String(rawEntry.resource_id ?? rawEntry[1] ?? '');
+      const rawEntry = memoEntry instanceof Map ? Object.fromEntries(memoEntry) : memoEntry as Record<string, unknown>;
+      const memoId = String(rawEntry.resource_id ?? rawEntry[1] ?? '');
 
-      const reportResult = await client.readContract({
+      const memoResult = await client.readContract({
         address: getContractAddress(),
-        functionName: 'get_report',
-        args: [reportId],
+        functionName: 'get_memo',
+        args: [memoId],
       });
 
-      setReport({
-        ...normalizeReport(reportResult),
+      setMemo({
+        ...normalizeMemo(memoResult),
         transactionHash: txHash,
         completedAt: new Date().toLocaleString(),
       });
     } catch (caughtError) {
-      console.error('Error generating due diligence report:', caughtError);
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to generate due diligence report');
+      console.error('Error generating funding memo:', caughtError);
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to generate funding memo');
     } finally {
       setLoading(false);
     }
@@ -86,41 +87,41 @@ export default function ReportsPanel() {
 
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-      <section className="panel px-5 py-5 sm:px-6">
-        <div className="eyebrow">Board-Ready Summary</div>
-        <h2 className="mt-2 font-display text-2xl">Generate a Diligence Briefing</h2>
-        <p className="mt-2 text-sm leading-6 text-text-muted">
-          Roll your reviewed vendors into one portfolio view with trust averages, escalation counts,
-          conditional approvals, and the next actions your team should take.
+      <section className="section-card">
+        <div className="section-kicker">Committee Prep</div>
+        <h2 className="section-title">Generate a Funding Memo</h2>
+        <p className="section-copy">
+          Roll the docket into one capital allocation view with viability averages, decline pressure,
+          conditional releases, and the next diligence moves the committee should make.
         </p>
 
         <button
-          onClick={handleGenerateReport}
+          onClick={handleGenerateMemo}
           disabled={loading}
-          className="primary-btn mt-6 w-full sm:w-auto"
+          className="primary-btn mt-7 w-full sm:w-auto"
         >
-          {loading ? 'Generating briefing...' : 'Generate Briefing'}
+          {loading ? 'Generating memo...' : 'Generate Memo'}
         </button>
 
         {error && (
-          <div className="mt-4 rounded-[1.2rem] border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="error-banner mt-4">
             {error}
           </div>
         )}
 
-        {!report && (
-          <div className="mt-6 grid grid-cols-1 gap-4">
-            <div className="panel-soft px-5 py-5">
-              <div className="eyebrow">Included Signals</div>
-              <p className="mt-3 text-sm leading-6 text-text-main">
-                Total vendors reviewed, average trust, escalation pressure, conditional approvals,
-                and a short list of actions distilled from your follow-up questions.
+        {!memo && (
+          <div className="mt-7 grid grid-cols-1 gap-4">
+            <div className="section-card alt-card">
+              <div className="section-kicker">Included Signals</div>
+              <p className="mt-3 text-sm leading-7 text-ink-main">
+                Total applications, average viability, release caution, and a short action list distilled
+                from the questions your reviewers keep asking.
               </p>
             </div>
-            <div className="panel-soft px-5 py-5">
-              <div className="eyebrow">Typical Uses</div>
-              <p className="mt-3 text-sm leading-6 text-text-main">
-                Procurement sign-off notes, weekly risk meetings, approval memos, and shortlist discussions.
+            <div className="section-card alt-card">
+              <div className="section-kicker">Typical Uses</div>
+              <p className="mt-3 text-sm leading-7 text-ink-main">
+                Allocation committee syncs, capital release notes, shortlist meetings, and milestone planning.
               </p>
             </div>
           </div>
@@ -128,39 +129,39 @@ export default function ReportsPanel() {
       </section>
 
       <section className="space-y-5">
-        {report && (
+        {memo && (
           <>
-            <div className="panel px-5 py-5 sm:px-6">
-              <div className="eyebrow">Portfolio Posture</div>
-              <div className="mt-3 text-4xl font-black text-accent-primary">{report.portfolio_posture}</div>
-              <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className="section-card">
+              <div className="section-kicker">Portfolio Signal</div>
+              <div className="mt-3 text-5xl font-semibold text-accent-gold">{memo.portfolio_signal}</div>
+              <div className="mt-5 grid grid-cols-2 gap-4 xl:grid-cols-4">
                 <div>
-                  <div className="text-sm text-text-muted">Vendors</div>
-                  <div className="mt-1 text-2xl font-bold">{report.total_vendors}</div>
+                  <div className="metric-label">Applications</div>
+                  <div className="metric-value">{memo.total_applications}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-text-muted">Average Trust</div>
-                  <div className="mt-1 text-2xl font-bold">{report.average_trust_score}</div>
+                  <div className="metric-label">Avg Viability</div>
+                  <div className="metric-value">{memo.average_viability_score}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-text-muted">Escalated</div>
-                  <div className="mt-1 text-2xl font-bold text-destructive">{report.escalated_count}</div>
+                  <div className="metric-label">Declines</div>
+                  <div className="metric-value text-danger">{memo.decline_count}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-text-muted">Conditional</div>
-                  <div className="mt-1 text-2xl font-bold text-warning">{report.conditional_count}</div>
+                  <div className="metric-label">Conditional</div>
+                  <div className="metric-value text-warning">{memo.conditional_count}</div>
                 </div>
               </div>
-              <div className="mt-4 text-xs text-text-muted">
-                <div>{report.completedAt}</div>
-                <div className="mt-1 break-all font-mono">{report.transactionHash}</div>
+              <div className="mt-4 text-xs text-ink-dim">
+                <div>{memo.completedAt}</div>
+                <div className="mt-1 break-all font-mono">{memo.transactionHash}</div>
               </div>
             </div>
 
-            <div className="panel-soft px-5 py-5">
-              <div className="eyebrow">Key Actions</div>
-              <div className="mt-4 space-y-3 text-sm leading-6 text-text-main">
-                {report.key_actions.map((item: string, index: number) => (
+            <div className="section-card">
+              <div className="section-kicker">Key Actions</div>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-ink-main">
+                {memo.key_actions.map((item: string, index: number) => (
                   <p key={`${item}-${index}`}>{item}</p>
                 ))}
               </div>

@@ -1,8 +1,8 @@
 {
-  "name": "vendor-lens",
+  "name": "commonweal",
   "version": "0.2.0",
   "private": true,
-  "description": "GenLayer vendor due diligence workspace for vendor review, framework benchmarking, comparison, and approval briefings",
+  "description": "GenLayer grant allocation workspace for application review, rubric benchmarking, comparison, and funding memos",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -32,13 +32,13 @@
     "typescript": "^5.8.3"
   },
   "keywords": [
-    "vendor-due-diligence",
-    "third-party-risk",
-    "procurement",
-    "vendor-review",
-    "trust-frameworks",
-    "enterprise",
-    "saas",
+    "grant-allocation",
+    "funding-committee",
+    "grant-review",
+    "capital-release",
+    "public-goods",
+    "treasury",
+    "evaluation",
     "web3",
     "genlayer",
     "decentralized"

@@ -1,28 +1,28 @@
-# VendorLens
+# Commonweal
 
-VendorLens is a GenLayer workspace for third-party vendor due diligence. Teams can review vendor materials, compare vendors head to head, benchmark evidence against trust frameworks, and publish concise approval briefings on-chain.
+Commonweal is a GenLayer grant allocation workspace for reviewing applications, comparing applicants, benchmarking proposals against funding rubrics, and generating release memos on-chain.
 
 ## What It Does
 
-- Reviews vendor materials and returns a trust score plus decision posture
-- Compares two reviewed vendors for differentiation and shared exposure
-- Benchmarks a vendor against SOC 2, ISO 27001, GDPR, or HIPAA expectations
-- Generates a portfolio-level due diligence briefing
-- Records all actions in a durable activity ledger
+- Reviews application packets and returns a viability score plus funding recommendation
+- Compares two reviewed applicants for separation and overlapping risk
+- Benchmarks a proposal against impact, feasibility, transparency, or equity rubrics
+- Generates a portfolio-level funding memo
+- Records every action in a durable ledger
 
 ## Core Contract
 
-- File: `genlayer_contracts/vendorTrustLedger.py`
-- Class: `VendorTrustLedger`
+- File: `genlayer_contracts/grantCouncilLedger.py`
+- Class: `GrantCouncilLedger`
 
 ## Frontend Areas
 
-- `Overview`: portfolio snapshot of reviewed vendors
-- `Vendor Intake`: submit materials for a new review
-- `Compare`: weigh two vendors against each other
-- `Frameworks`: benchmark a vendor against a trust framework
-- `Activity`: inspect the permanent decision ledger
-- `Briefing`: generate a summary report
+- `Signal`: portfolio snapshot of reviewed applications
+- `Intake`: submit materials for a new funding review
+- `Matchup`: compare two applicants head to head
+- `Rubrics`: test one proposal against a funding rubric
+- `Ledger`: inspect the permanent action trail
+- `Memo`: generate a committee-ready funding summary
 
 ## Run Locally
 
@@ -41,7 +41,7 @@ NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 
 ## Deploy The Contract
 
-Upload `genlayer_contracts/vendorTrustLedger.py` to GenLayer Studio, deploy it, and place the new address in `.env.local`.
+Upload `genlayer_contracts/grantCouncilLedger.py` to GenLayer Studio, deploy it, and place the new address in `.env.local`.
 
 ## Stack
 

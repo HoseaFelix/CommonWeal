@@ -1,13 +1,13 @@
-# VendorLens Deployment Guide
+# Commonweal Deployment Guide
 
 ## Overview
 
-VendorLens is a GenLayer application for vendor due diligence, framework benchmarking, and approval briefings.
+Commonweal is a GenLayer application for grant allocation review, rubric benchmarking, applicant comparison, and funding memos.
 
 ## Main Contract
 
-- File: `genlayer_contracts/vendorTrustLedger.py`
-- Class: `VendorTrustLedger`
+- File: `genlayer_contracts/grantCouncilLedger.py`
+- Class: `GrantCouncilLedger`
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ PRIVATE_KEY=0x...
 
 1. Open `https://studio.genlayer.com`
 2. Create or open a project
-3. Upload `genlayer_contracts/vendorTrustLedger.py`
+3. Upload `genlayer_contracts/grantCouncilLedger.py`
 4. Deploy the contract
 5. Copy the deployed address into `.env.local`
 
@@ -53,15 +53,15 @@ npm start
 The deployment helpers in `scripts/` are configured to read:
 
 ```text
-genlayer_contracts/vendorTrustLedger.py
+genlayer_contracts/grantCouncilLedger.py
 ```
 
-## Supported Frameworks
+## Supported Rubrics
 
-- SOC 2
-- ISO 27001
-- GDPR
-- HIPAA
+- IMPACT
+- FEASIBILITY
+- TRANSPARENCY
+- EQUITY
 
 ## Troubleshooting
 

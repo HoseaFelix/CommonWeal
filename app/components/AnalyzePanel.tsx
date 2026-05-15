@@ -1,47 +1,48 @@
-'use client'
+'use client';
 
 import { useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { getContractAddress, getGenlayerClient, normalizeReview } from '@/app/lib/genlayer';
-import { useVendorReviewStore } from '@/store/store';
+import { getContractAddress, getGenlayerClient, normalizeApplication } from '@/app/lib/genlayer';
+import { useGrantApplicationStore } from '@/store/store';
 
-type ReviewRecord = ReturnType<typeof normalizeReview>;
+type ApplicationRecord = ReturnType<typeof normalizeApplication>;
 
-function DecisionSurface({ decision }: { decision: string }) {
-  const color = decision.toLowerCase() === 'approve'
-    ? 'text-success border-success/20 bg-success/10'
-    : decision.toLowerCase() === 'conditional'
-      ? 'text-warning border-warning/20 bg-warning/10'
-      : 'text-destructive border-destructive/20 bg-destructive/10';
+function RecommendationSurface({ recommendation }: { recommendation: string }) {
+  const color = recommendation.toLowerCase() === 'fund'
+    ? 'text-success border-success/25 bg-success/10'
+    : recommendation.toLowerCase() === 'conditional'
+      ? 'text-warning border-warning/25 bg-warning/10'
+      : 'text-danger border-danger/25 bg-danger/10';
 
-  return <div className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${color}`}>{decision}</div>;
+  return <div className={`inline-flex rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] ${color}`}>{recommendation}</div>;
 }
 
 export default function AnalyzePanel() {
   const { account, walletType } = useWallet();
-  const [vendorName, setVendorName] = useState('');
-  const [serviceScope, setServiceScope] = useState('');
-  const [materials, setMaterials] = useState('');
+  const [applicantName, setApplicantName] = useState('');
+  const [projectTitle, setProjectTitle] = useState('');
+  const [fundingRequest, setFundingRequest] = useState('');
+  const [applicationMaterials, setApplicationMaterials] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('');
-  const [review, setReview] = useState<ReviewRecord | null>(null);
+  const [application, setApplication] = useState<ApplicationRecord | null>(null);
   const [transactionHash, setTransactionHash] = useState('');
   const [error, setError] = useState('');
 
   const handleReview = async () => {
-    if (!vendorName.trim() || !materials.trim()) {
-      setError('Add a vendor name and source materials before starting review.');
+    if (!applicantName.trim() || !projectTitle.trim() || !applicationMaterials.trim()) {
+      setError('Add an applicant, project title, and application packet before opening review.');
       return;
     }
 
     if (!account?.address) {
-      setError('Connect a wallet before writing a review on-chain.');
+      setError('Connect a wallet before writing an on-chain allocation review.');
       return;
     }
 
     setLoading(true);
-    setStatus('Submitting vendor dossier to GenLayer...');
-    setReview(null);
+    setStatus('Submitting application dossier to GenLayer...');
+    setApplication(null);
     setTransactionHash('');
     setError('');
 
@@ -49,13 +50,13 @@ export default function AnalyzePanel() {
       const client = getGenlayerClient(account, walletType);
       const txHash = await client.writeContract({
         address: getContractAddress(),
-        functionName: 'review_vendor',
-        args: [vendorName.trim(), serviceScope.trim(), materials.trim()],
+        functionName: 'review_application',
+        args: [applicantName.trim(), projectTitle.trim(), fundingRequest.trim(), applicationMaterials.trim()],
         value: 0n,
       });
 
       setTransactionHash(txHash);
-      setStatus('Waiting for validator consensus on vendor posture...');
+      setStatus('Waiting for allocator consensus on release readiness...');
 
       const receipt = await client.waitForTransactionReceipt({
         hash: txHash,
@@ -64,40 +65,41 @@ export default function AnalyzePanel() {
       });
 
       if (receipt.result !== 0 && receipt.result !== 6) {
-        throw new Error(receipt.resultName || 'Vendor review failed during consensus');
+        throw new Error(receipt.resultName || 'Application review failed during consensus');
       }
 
-      setStatus('Loading finalized review...');
+      setStatus('Loading finalized application review...');
 
-      const reviewsResult = await client.readContract({
+      const applicationsResult = await client.readContract({
         address: getContractAddress(),
-        functionName: 'get_user_reviews',
+        functionName: 'get_user_applications',
         args: [account.address],
       });
 
-      if (!Array.isArray(reviewsResult) || reviewsResult.length === 0) {
-        throw new Error('Review completed, but no vendor review was returned.');
+      if (!Array.isArray(applicationsResult) || applicationsResult.length === 0) {
+        throw new Error('Review completed, but no application result was returned.');
       }
 
-      const latestReview = normalizeReview(reviewsResult[reviewsResult.length - 1]);
-      useVendorReviewStore.setState({
-        trustScore: latestReview.trust_score,
-        decision: latestReview.decision,
-        summary: latestReview.summary,
-        criticalFindings: latestReview.critical_findings,
-        strengths: latestReview.strengths,
-        followUpQuestions: latestReview.follow_up_questions,
-        recommendedControls: latestReview.recommended_controls,
+      const latestApplication = normalizeApplication(applicationsResult[applicationsResult.length - 1]);
+      useGrantApplicationStore.setState({
+        viabilityScore: latestApplication.viability_score,
+        recommendation: latestApplication.recommendation,
+        thesis: latestApplication.thesis,
+        riskFlags: latestApplication.risk_flags,
+        strengths: latestApplication.strengths,
+        diligenceQuestions: latestApplication.diligence_questions,
+        milestoneConditions: latestApplication.milestone_conditions,
       });
 
-      setReview(latestReview);
+      setApplication(latestApplication);
       setStatus('Review finalized');
-      setVendorName('');
-      setServiceScope('');
-      setMaterials('');
+      setApplicantName('');
+      setProjectTitle('');
+      setFundingRequest('');
+      setApplicationMaterials('');
     } catch (caughtError) {
-      console.error('Error reviewing vendor:', caughtError);
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to review vendor');
+      console.error('Error reviewing application:', caughtError);
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to review application');
       setStatus('');
     } finally {
       setLoading(false);
@@ -105,58 +107,68 @@ export default function AnalyzePanel() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-        <section className="panel px-5 py-5 sm:px-6">
-          <div className="eyebrow">Vendor Intake</div>
-          <h2 className="mt-2 font-display text-2xl">Build a Vendor Dossier</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-text-muted">
-            Combine trust center notes, DPA clauses, security answers, and procurement responses into
-            one due diligence package. GenLayer validators return a trust score, a decision posture,
-            critical findings, and the next questions your team should ask.
+        <section className="section-card">
+          <div className="section-kicker">Intake Chamber</div>
+          <h2 className="section-title">Open a Funding Review</h2>
+          <p className="section-copy">
+            Paste the raw application packet exactly as the committee received it. The network produces a
+            viability score, a release recommendation, risk flags, diligence questions, and milestone conditions
+            you can attach to any disbursement decision.
           </p>
 
-          <div className="mt-6 space-y-4">
+          <div className="mt-8 space-y-5">
             <div>
-              <label className="mb-2 block text-sm font-semibold">Vendor Name</label>
+              <label className="field-label">Applicant</label>
               <input
                 type="text"
                 className="field"
-                placeholder="Example: Northwind Analytics"
-                value={vendorName}
-                onChange={(event) => setVendorName(event.target.value)}
+                placeholder="Example: Riverlight Labs"
+                value={applicantName}
+                onChange={(event) => setApplicantName(event.target.value)}
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-semibold">Service Scope</label>
+              <label className="field-label">Project Title</label>
               <input
                 type="text"
                 className="field"
-                placeholder="Example: Customer data platform with subprocessors"
-                value={serviceScope}
-                onChange={(event) => setServiceScope(event.target.value)}
+                placeholder="Example: Flood early-warning network for coastal schools"
+                value={projectTitle}
+                onChange={(event) => setProjectTitle(event.target.value)}
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-semibold">Vendor Materials</label>
+              <label className="field-label">Funding Request</label>
+              <input
+                type="text"
+                className="field"
+                placeholder="Example: $85,000 over 9 months with 3 milestone releases"
+                value={fundingRequest}
+                onChange={(event) => setFundingRequest(event.target.value)}
+              />
+            </div>
+            <div>
+              <label className="field-label">Application Packet</label>
               <textarea
-                rows={14}
+                rows={15}
                 className="field resize-none"
-                placeholder="Paste questionnaire answers, security summaries, privacy promises, insurance notes, DPA excerpts, trust center claims, and any procurement context here."
-                value={materials}
-                onChange={(event) => setMaterials(event.target.value)}
+                placeholder="Paste the proposal narrative, theory of change, budget notes, team background, delivery plan, reporting commitments, references, and any reviewer context here."
+                value={applicationMaterials}
+                onChange={(event) => setApplicationMaterials(event.target.value)}
               />
-              <div className="mt-2 text-xs text-text-muted">{materials.length} characters</div>
+              <div className="mt-2 text-xs uppercase tracking-[0.2em] text-ink-dim">{applicationMaterials.length} characters</div>
             </div>
             <button
               onClick={handleReview}
-              disabled={loading || !vendorName.trim() || !materials.trim()}
+              disabled={loading || !applicantName.trim() || !projectTitle.trim() || !applicationMaterials.trim()}
               className="primary-btn w-full sm:w-auto"
             >
-              {loading ? status || 'Reviewing vendor...' : 'Run Vendor Review'}
+              {loading ? status || 'Reviewing application...' : 'Run Allocation Review'}
             </button>
             {error && (
-              <div className="rounded-[1.2rem] border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <div className="error-banner">
                 {error}
               </div>
             )}
@@ -164,92 +176,91 @@ export default function AnalyzePanel() {
         </section>
 
         <section className="space-y-5">
-          <div className="panel px-5 py-5 sm:px-6">
-            <div className="eyebrow">Expected Output</div>
-            <ul className="mt-4 space-y-3 text-sm leading-6 text-text-main">
-              <li>Trust score from 0 to 100 for procurement readiness.</li>
-              <li>Decision posture: approve, conditional, or escalate.</li>
-              <li>Critical findings grouped by risk area and severity.</li>
-              <li>Follow-up questions for security, legal, or operations.</li>
-              <li>Recommended controls or evidence to request next.</li>
+          <div className="section-card">
+            <div className="section-kicker">Expected Output</div>
+            <ul className="mt-5 space-y-3 text-sm leading-7 text-ink-main">
+              <li>Viability score from 0 to 100 for release readiness.</li>
+              <li>Recommendation: fund, conditional, or decline.</li>
+              <li>Risk flags grouped by area and severity.</li>
+              <li>Diligence questions for the committee’s next pass.</li>
+              <li>Milestone conditions to attach to any capital release.</li>
             </ul>
           </div>
-          <div className="panel px-5 py-5 sm:px-6">
-            <div className="eyebrow">Best Inputs</div>
-            <ul className="mt-4 space-y-3 text-sm leading-6 text-text-main">
-              <li>Vendor security one-pager or trust center export.</li>
-              <li>DPA excerpts, breach clauses, and retention language.</li>
-              <li>Questionnaire responses from procurement or legal review.</li>
-              <li>Service architecture notes or support commitments.</li>
+          <div className="section-card">
+            <div className="section-kicker">Best Inputs</div>
+            <ul className="mt-5 space-y-3 text-sm leading-7 text-ink-main">
+              <li>Plain-language proposal and beneficiary definition.</li>
+              <li>Budget and release schedule with cost assumptions.</li>
+              <li>Team credentials and operational delivery history.</li>
+              <li>Evidence of traction, pilots, partnerships, or demand.</li>
             </ul>
           </div>
         </section>
       </div>
 
-      {review && (
+      {application && (
         <section className="space-y-5">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
-            <div className="panel px-5 py-5 sm:px-6">
-              <div className="eyebrow">Trust Score</div>
-              <div className="mt-3 text-5xl font-black text-accent-primary">{review.trust_score}</div>
-              <div className="mt-4">
-                <DecisionSurface decision={review.decision} />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
+            <div className="section-card">
+              <div className="section-kicker">Viability Score</div>
+              <div className="mt-4 text-6xl font-semibold text-accent-cyan">{application.viability_score}</div>
+              <div className="mt-5">
+                <RecommendationSurface recommendation={application.recommendation} />
               </div>
               {transactionHash && (
-                <div className="mt-4 text-xs text-text-muted">
-                  <div className="uppercase tracking-[0.2em]">Transaction</div>
+                <div className="mt-5 text-xs text-ink-dim">
+                  <div className="uppercase tracking-[0.18em]">Transaction</div>
                   <div className="mt-2 break-all font-mono">{transactionHash}</div>
                 </div>
               )}
             </div>
-            <div className="panel px-5 py-5 sm:px-6">
-              <div className="eyebrow">Consensus Summary</div>
-              <h3 className="mt-2 text-xl font-semibold">{review.vendor_name}</h3>
-              <p className="mt-1 text-sm text-text-muted">{review.service_scope}</p>
-              <p className="mt-4 text-sm leading-7 text-text-main">{review.summary}</p>
+            <div className="section-card">
+              <div className="section-kicker">Allocation Thesis</div>
+              <h3 className="mt-2 text-2xl font-semibold text-ink-bright">{application.project_title}</h3>
+              <p className="mt-1 text-sm uppercase tracking-[0.24em] text-ink-dim">{application.applicant_name}</p>
+              <p className="mt-2 text-sm text-accent-gold">{application.funding_request}</p>
+              <p className="mt-5 text-sm leading-8 text-ink-main">{application.thesis}</p>
             </div>
           </div>
 
-          {review.critical_findings.length > 0 && (
-            <div className="panel px-5 py-5 sm:px-6">
-              <div className="eyebrow">Critical Findings</div>
-              <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
-                {review.critical_findings.map((finding, index) => (
-                  <article key={`${finding.area}-${index}`} className="rounded-[1.3rem] border border-edge bg-white/60 px-4 py-4">
+          {application.risk_flags.length > 0 && (
+            <div className="section-card">
+              <div className="section-kicker">Risk Flags</div>
+              <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
+                {application.risk_flags.map((flag, index) => (
+                  <article key={`${flag.area}-${index}`} className="record-card">
                     <div className="flex items-start justify-between gap-3">
-                      <h4 className="font-semibold">{finding.area}</h4>
-                      <span className="rounded-full bg-white px-3 py-1 text-xs uppercase tracking-[0.18em] text-text-muted">
-                        {finding.severity}
-                      </span>
+                      <h4 className="text-lg font-semibold text-ink-bright">{flag.area}</h4>
+                      <span className="signal-chip">{flag.severity}</span>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-text-main">{finding.rationale}</p>
+                    <p className="mt-3 text-sm leading-7 text-ink-main">{flag.rationale}</p>
                   </article>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="panel px-5 py-5 sm:px-6">
-              <div className="eyebrow">Strengths</div>
-              <div className="mt-4 space-y-3 text-sm leading-6 text-text-main">
-                {review.strengths.map((item, index) => (
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+            <div className="section-card">
+              <div className="section-kicker">Strengths</div>
+              <div className="mt-5 space-y-3 text-sm leading-7 text-ink-main">
+                {application.strengths.map((item, index) => (
                   <p key={`${item}-${index}`}>{item}</p>
                 ))}
               </div>
             </div>
-            <div className="panel px-5 py-5 sm:px-6">
-              <div className="eyebrow">Follow-up Questions</div>
-              <div className="mt-4 space-y-3 text-sm leading-6 text-text-main">
-                {review.follow_up_questions.map((item, index) => (
+            <div className="section-card">
+              <div className="section-kicker">Diligence Questions</div>
+              <div className="mt-5 space-y-3 text-sm leading-7 text-ink-main">
+                {application.diligence_questions.map((item, index) => (
                   <p key={`${item}-${index}`}>{item}</p>
                 ))}
               </div>
             </div>
-            <div className="panel px-5 py-5 sm:px-6">
-              <div className="eyebrow">Recommended Controls</div>
-              <div className="mt-4 space-y-3 text-sm leading-6 text-text-main">
-                {review.recommended_controls.map((item, index) => (
+            <div className="section-card">
+              <div className="section-kicker">Milestone Conditions</div>
+              <div className="mt-5 space-y-3 text-sm leading-7 text-ink-main">
+                {application.milestone_conditions.map((item, index) => (
                   <p key={`${item}-${index}`}>{item}</p>
                 ))}
               </div>

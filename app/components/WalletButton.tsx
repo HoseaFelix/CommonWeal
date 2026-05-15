@@ -23,18 +23,18 @@ export const WalletButton = () => {
     <div className="relative">
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className="secondary-btn gap-3 border border-edge/80 shadow-[0_10px_20px_rgba(47,35,26,0.06)]"
+        className="secondary-btn gap-3 shadow-[0_12px_24px_rgba(0,0,0,0.22)]"
       >
-        <span className={`h-2.5 w-2.5 rounded-full ${walletType === 'auto' ? 'bg-accent-tertiary' : 'bg-success'}`} />
-        <span className="text-sm">
+        <span className={`h-2.5 w-2.5 rounded-full ${walletType === 'auto' ? 'bg-accent-gold' : 'bg-success'}`} />
+        <span className="text-[0.72rem] uppercase tracking-[0.16em]">
           {walletType === 'auto' ? 'Studio Wallet' : 'MetaMask'}
         </span>
-        <span className="font-mono text-xs text-text-muted">{formatAddress(account.address)}</span>
+        <span className="font-mono text-xs text-ink-dim">{formatAddress(account.address)}</span>
       </button>
 
       {showMenu && (
-        <div className="absolute right-0 z-50 mt-2 w-56 rounded-[1.4rem] border border-edge bg-panel p-2 shadow-[0_18px_35px_rgba(47,35,26,0.14)]">
-          <div className="px-3 py-2 text-xs uppercase tracking-[0.2em] text-text-muted">
+        <div className="absolute right-0 z-50 mt-2 w-60 rounded-[1.2rem] border border-white/10 bg-[rgba(8,15,28,0.96)] p-2 shadow-[0_18px_35px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+          <div className="px-3 py-2 text-[0.68rem] uppercase tracking-[0.22em] text-ink-dim">
             {walletType === 'auto' ? 'Ephemeral Session' : 'Connected Wallet'}
           </div>
           {walletType === 'auto' && (
@@ -43,7 +43,7 @@ export const WalletButton = () => {
                 setShowMenu(false);
                 await connectMetaMask();
               }}
-              className="w-full rounded-xl px-3 py-2 text-left text-sm text-text-main hover:bg-white/70"
+              className="w-full rounded-xl px-3 py-2 text-left text-sm text-ink-main transition hover:bg-white/5"
             >
               Switch to MetaMask
             </button>
@@ -53,7 +53,7 @@ export const WalletButton = () => {
               setShowMenu(false);
               disconnect();
             }}
-            className="w-full rounded-xl px-3 py-2 text-left text-sm text-destructive hover:bg-white/70"
+            className="w-full rounded-xl px-3 py-2 text-left text-sm text-danger transition hover:bg-white/5"
           >
             Disconnect
           </button>

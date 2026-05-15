@@ -1,18 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #f0eae0;
-  --color-panel: #fbf6ee;
-  --color-panel-strong: #f5ede2;
-  --color-edge: #d6cabb;
-  --color-text-main: #201a17;
-  --color-text-muted: #6f665f;
-  --color-accent-primary: #965137;
-  --color-accent-secondary: #315b57;
-  --color-accent-tertiary: #b69353;
-  --color-success: #3e6d4d;
-  --color-warning: #9b6b30;
-  --color-destructive: #9a433a;
+  --color-bg: #07111f;
+  --color-shell: rgba(10, 18, 34, 0.84);
+  --color-shell-strong: rgba(12, 22, 41, 0.94);
+  --color-card: rgba(16, 28, 52, 0.72);
+  --color-card-alt: rgba(13, 24, 46, 0.88);
+  --color-edge: rgba(217, 228, 255, 0.14);
+  --color-ink-main: #d9e4ff;
+  --color-ink-soft: #98abc9;
+  --color-ink-dim: #6f82a8;
+  --color-ink-bright: #f5f8ff;
+  --color-accent-cyan: #7cf5d6;
+  --color-accent-gold: #f4b66a;
+  --color-accent-violet: #6e7fff;
+  --color-success: #61df9d;
+  --color-warning: #f2b55d;
+  --color-danger: #f1737d;
 }
 
 @layer base {
@@ -26,71 +30,546 @@
 
   body {
     min-height: 100vh;
-    color: var(--color-text-main);
+    color: var(--color-ink-main);
     background:
-      radial-gradient(circle at top left, rgba(150, 81, 55, 0.12), transparent 32%),
-      radial-gradient(circle at bottom right, rgba(49, 91, 87, 0.1), transparent 28%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(240, 234, 224, 0.94)),
-      var(--color-bg);
+      radial-gradient(circle at 12% 10%, rgba(110, 127, 255, 0.22), transparent 26%),
+      radial-gradient(circle at 88% 16%, rgba(124, 245, 214, 0.11), transparent 20%),
+      radial-gradient(circle at 52% 84%, rgba(244, 182, 106, 0.10), transparent 28%),
+      linear-gradient(180deg, #07111f 0%, #040914 100%);
   }
 }
 
 @layer components {
-  .font-display {
-    font-family: "Palatino Linotype", "Book Antiqua", "Iowan Old Style", "Baskerville", serif;
-  }
-
   .font-body {
-    font-family: "Trebuchet MS", "Gill Sans", "Segoe UI", sans-serif;
+    font-family: "Aptos", "Trebuchet MS", "Gill Sans", "Segoe UI", sans-serif;
   }
 
   .font-mono {
-    font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+    font-family: "IBM Plex Mono", "SFMono-Regular", "Consolas", monospace;
   }
 
-  .panel {
-    @apply rounded-[1.75rem] border shadow-[0_16px_45px_rgba(47,35,26,0.08)];
-    background: linear-gradient(180deg, rgba(251, 246, 238, 0.95), rgba(245, 237, 226, 0.92));
+  .shell-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(217, 228, 255, 0.12);
+    border-radius: 2rem;
+    background:
+      linear-gradient(180deg, rgba(17, 30, 55, 0.9), rgba(8, 15, 29, 0.94)),
+      var(--color-shell);
+    box-shadow:
+      0 30px 90px rgba(0, 0, 0, 0.36),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(24px);
   }
 
-  .panel-soft {
-    @apply rounded-[1.5rem] border;
-    background: rgba(251, 246, 238, 0.78);
+  .noise-layer {
+    position: fixed;
+    inset: 0;
+    opacity: 0.08;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.4) 0.8px, transparent 0.8px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.25) 0.8px, transparent 0.8px);
+    background-size: 3px 3px, 5px 5px;
+    mix-blend-mode: soft-light;
+    pointer-events: none;
   }
 
-  .field {
-    @apply w-full rounded-2xl border px-4 py-3 text-sm text-text-main outline-none transition;
-    background: rgba(255, 252, 247, 0.92);
+  .atmosphere {
+    position: fixed;
+    border-radius: 9999px;
+    filter: blur(80px);
+    pointer-events: none;
   }
 
-  .field:focus {
-    border-color: rgba(150, 81, 55, 0.55);
-    box-shadow: 0 0 0 3px rgba(150, 81, 55, 0.11);
+  .atmosphere-a {
+    top: 6%;
+    right: -8%;
+    height: 20rem;
+    width: 20rem;
+    background: rgba(110, 127, 255, 0.2);
   }
 
-  .primary-btn {
-    @apply inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
-    color: #fff9f2;
-    background: linear-gradient(135deg, var(--color-accent-primary), #7f3f28);
-    box-shadow: 0 14px 32px rgba(150, 81, 55, 0.2);
+  .atmosphere-b {
+    bottom: -4%;
+    left: -6%;
+    height: 24rem;
+    width: 24rem;
+    background: rgba(124, 245, 214, 0.11);
   }
 
-  .secondary-btn {
-    @apply inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition;
-    color: var(--color-text-main);
-    background: rgba(255, 252, 247, 0.78);
-    border: 1px solid rgba(111, 102, 95, 0.2);
+  .hero-title {
+    font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "URW Palladio L", serif;
+    font-size: clamp(2.8rem, 7vw, 5.4rem);
+    line-height: 0.96;
+    color: var(--color-ink-bright);
+    letter-spacing: -0.05em;
+  }
+
+  .hero-copy {
+    max-width: 42rem;
+    font-size: 0.98rem;
+    line-height: 1.95;
+    color: var(--color-ink-soft);
   }
 
   .eyebrow {
-    @apply text-[0.68rem] uppercase tracking-[0.32em];
-    color: var(--color-text-muted);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.38em;
+    color: var(--color-accent-cyan);
   }
 
-  .paper-grid {
-    background-image:
-      linear-gradient(rgba(111, 102, 95, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(111, 102, 95, 0.06) 1px, transparent 1px);
-    background-size: 18px 18px;
+  .brand-medallion {
+    display: grid;
+    place-items: center;
+    height: 5.6rem;
+    width: 5.6rem;
+    border-radius: 1.7rem;
+    border: 1px solid rgba(124, 245, 214, 0.2);
+    background:
+      radial-gradient(circle at center, rgba(110, 127, 255, 0.22), transparent 58%),
+      rgba(255, 255, 255, 0.03);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 18px 40px rgba(0, 0, 0, 0.22);
+  }
+
+  .brand-medallion-sm {
+    height: 4.4rem;
+    width: 4.4rem;
+    border-radius: 1.35rem;
+  }
+
+  .app-navbar-wrap {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 40;
+    pointer-events: none;
+  }
+
+  .app-navbar-shadow {
+    height: 1.5rem;
+    background: linear-gradient(180deg, rgba(3, 8, 18, 0.6), transparent);
+  }
+
+  .app-navbar {
+    pointer-events: auto;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    max-width: 1540px;
+    margin: 0 auto;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(217, 228, 255, 0.12);
+    border-radius: 0 0 1.4rem 1.4rem;
+    background: rgba(7, 14, 27, 0.9);
+    box-shadow:
+      0 18px 46px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+  }
+
+  .app-navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+  }
+
+  .app-navbar-kicker {
+    font-size: 0.62rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--color-accent-cyan);
+  }
+
+  .app-navbar-title {
+    font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "URW Palladio L", serif;
+    font-size: 1.45rem;
+    line-height: 1;
+    color: var(--color-ink-bright);
+    letter-spacing: -0.03em;
+  }
+
+  .app-navbar-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 0;
+    overflow-x: auto;
+    padding-inline: 0.5rem;
+  }
+
+  .app-nav-link {
+    flex: 0 0 auto;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    padding: 0.7rem 0.95rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+    background: transparent;
+    transition: 180ms ease;
+  }
+
+  .app-nav-link:hover {
+    color: var(--color-ink-bright);
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .app-nav-link-active {
+    color: #06111f;
+    border-color: rgba(124, 245, 214, 0.25);
+    background: linear-gradient(135deg, var(--color-accent-cyan), #bff9ec);
+    box-shadow: 0 10px 24px rgba(124, 245, 214, 0.14);
+  }
+
+  .app-navbar-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .hero-band {
+    padding: 1.5rem 1.25rem 1.75rem;
+  }
+
+  .hero-side {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+  }
+
+  .mini-stat {
+    border: 1px solid rgba(217, 228, 255, 0.1);
+    border-radius: 1.3rem;
+    padding: 1rem 0.65rem;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .mini-stat-value {
+    font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "URW Palladio L", serif;
+    font-size: 1.55rem;
+    color: var(--color-ink-bright);
+  }
+
+  .mini-stat-label {
+    margin-top: 0.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--color-ink-dim);
+  }
+
+  .active-panel-head {
+    display: grid;
+    gap: 1rem;
+    align-items: end;
+  }
+
+  .active-panel-copy {
+    max-width: 42rem;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: var(--color-ink-soft);
+  }
+
+  .section-card {
+    border: 1px solid rgba(217, 228, 255, 0.1);
+    border-radius: 1.6rem;
+    padding: 1.5rem;
+    background:
+      linear-gradient(180deg, rgba(20, 33, 60, 0.74), rgba(10, 19, 36, 0.88)),
+      var(--color-card);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .alt-card {
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .record-card {
+    border: 1px solid rgba(217, 228, 255, 0.09);
+    border-radius: 1.4rem;
+    padding: 1.25rem;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
+      rgba(3, 8, 18, 0.24);
+  }
+
+  .stat-card {
+    border: 1px solid rgba(217, 228, 255, 0.11);
+    border-radius: 1.55rem;
+    padding: 1.25rem;
+    background:
+      linear-gradient(180deg, rgba(18, 32, 59, 0.78), rgba(11, 20, 36, 0.92));
+  }
+
+  .stat-label,
+  .section-kicker,
+  .field-label,
+  .metric-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--color-ink-dim);
+  }
+
+  .stat-value {
+    margin-top: 1rem;
+    font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "URW Palladio L", serif;
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .stat-note,
+  .section-copy {
+    margin-top: 0.8rem;
+    font-size: 0.94rem;
+    line-height: 1.85;
+    color: var(--color-ink-soft);
+  }
+
+  .section-title {
+    margin-top: 0.45rem;
+    font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "URW Palladio L", serif;
+    font-size: 2rem;
+    line-height: 1.05;
+    color: var(--color-ink-bright);
+    letter-spacing: -0.03em;
+  }
+
+  .field {
+    width: 100%;
+    border: 1px solid rgba(217, 228, 255, 0.12);
+    border-radius: 1.15rem;
+    padding: 0.95rem 1rem;
+    font-size: 0.94rem;
+    color: var(--color-ink-main);
+    background: rgba(7, 14, 28, 0.78);
+    outline: none;
+    transition: 180ms ease;
+  }
+
+  .field:focus {
+    border-color: rgba(124, 245, 214, 0.36);
+    box-shadow: 0 0 0 3px rgba(124, 245, 214, 0.1);
+  }
+
+  .primary-btn,
+  .secondary-btn,
+  .filter-chip,
+  .signal-chip,
+  .status-pill {
+    transition: 180ms ease;
+  }
+
+  .primary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    padding: 0.9rem 1.35rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #04101f;
+    background: linear-gradient(135deg, var(--color-accent-gold), #ffd495 60%, var(--color-accent-cyan));
+    box-shadow: 0 16px 34px rgba(244, 182, 106, 0.18);
+  }
+
+  .primary-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(217, 228, 255, 0.12);
+    border-radius: 9999px;
+    padding: 0.85rem 1.15rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-ink-main);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .signal-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(217, 228, 255, 0.12);
+    border-radius: 9999px;
+    padding: 0.45rem 0.8rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border-width: 1px;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .metric-value {
+    margin-top: 0.25rem;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--color-ink-bright);
+  }
+
+  .empty-state {
+    border: 1px dashed rgba(217, 228, 255, 0.16);
+    border-radius: 1.4rem;
+    padding: 2.4rem 1.25rem;
+    text-align: center;
+    font-size: 0.94rem;
+    color: var(--color-ink-soft);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .error-banner {
+    border: 1px solid rgba(241, 115, 125, 0.24);
+    border-radius: 1.1rem;
+    padding: 0.9rem 1rem;
+    font-size: 0.9rem;
+    color: var(--color-danger);
+    background: rgba(241, 115, 125, 0.08);
+  }
+
+  .filter-chip {
+    border: 1px solid rgba(217, 228, 255, 0.08);
+    border-radius: 9999px;
+    padding: 0.68rem 0.95rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .filter-chip-active {
+    color: #04101f;
+    background: var(--color-accent-violet);
+    border-color: transparent;
+  }
+
+  .rubric-card {
+    border: 1px solid rgba(217, 228, 255, 0.09);
+    border-radius: 1.15rem;
+    padding: 1rem;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .rubric-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .rubric-card-active {
+    border-color: rgba(124, 245, 214, 0.28);
+    background:
+      linear-gradient(180deg, rgba(124, 245, 214, 0.08), rgba(110, 127, 255, 0.07)),
+      rgba(255, 255, 255, 0.03);
+    box-shadow: 0 12px 28px rgba(124, 245, 214, 0.06);
+  }
+
+  .loader-ring {
+    height: 2.8rem;
+    width: 2.8rem;
+    border-radius: 9999px;
+    border: 2px solid rgba(124, 245, 214, 0.16);
+    border-top-color: var(--color-accent-cyan);
+    animation: spin 0.9s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: 2.8rem;
+  }
+
+  .section-card,
+  .stat-card {
+    padding: 1.15rem;
+  }
+
+  .app-navbar {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+    margin-inline: 0.75rem;
+    padding: 0.8rem;
+  }
+
+  .app-navbar-brand,
+  .app-navbar-actions {
+    justify-content: center;
+  }
+
+  .app-navbar-links {
+    justify-content: flex-start;
+    padding-inline: 0;
+  }
+
+  .hero-band {
+    padding-inline: 1rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .app-navbar {
+    grid-template-columns: auto 1fr;
+  }
+
+  .app-navbar-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (min-width: 1025px) {
+  .active-panel-head {
+    grid-template-columns: 320px 1fr;
   }
 }

@@ -39,7 +39,7 @@ async function main() {
     });
 
     // 2. Read Contract Source
-    const contractPath = path.resolve(__dirname, '../genlayer_contracts/vendorTrustLedger.py');
+    const contractPath = path.resolve(__dirname, '../genlayer_contracts/grantCouncilLedger.py');
     const contractSource = fs.readFileSync(contractPath, 'utf8');
 
     console.log(`Reading contract from ${contractPath}...`);

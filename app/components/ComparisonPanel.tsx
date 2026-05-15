@@ -1,24 +1,25 @@
-'use client'
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useWallet } from '@/app/context/WalletContext';
-import { getContractAddress, getGenlayerClient, normalizeComparison, normalizeReview } from '@/app/lib/genlayer';
+import { getContractAddress, getGenlayerClient, normalizeApplication, normalizeComparison } from '@/app/lib/genlayer';
 
-type ReviewRecord = ReturnType<typeof normalizeReview>;
+type ApplicationRecord = ReturnType<typeof normalizeApplication>;
 type ComparisonRecord = ReturnType<typeof normalizeComparison>;
 
 export default function ComparisonPanel() {
   const { account, walletType } = useWallet();
-  const [reviews, setReviews] = useState<ReviewRecord[]>([]);
-  const [reviewA, setReviewA] = useState('');
-  const [reviewB, setReviewB] = useState('');
+  const [applications, setApplications] = useState<ApplicationRecord[]>([]);
+  const [applicationA, setApplicationA] = useState('');
+  const [applicationB, setApplicationB] = useState('');
   const [loading, setLoading] = useState(false);
   const [comparison, setComparison] = useState<(ComparisonRecord & { transactionHash: string; completedAt: string }) | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const loadReviews = async () => {
+    const loadApplications = async () => {
       if (!account?.address) {
-        setReviews([]);
+        setApplications([]);
         return;
       }
 
@@ -26,28 +27,28 @@ export default function ComparisonPanel() {
         const client = getGenlayerClient(account, walletType);
         const result = await client.readContract({
           address: getContractAddress(),
-          functionName: 'get_user_reviews',
+          functionName: 'get_user_applications',
           args: [account.address],
         });
 
-        setReviews(Array.isArray(result) ? result.map((item) => normalizeReview(item)) : []);
+        setApplications(Array.isArray(result) ? result.map((item) => normalizeApplication(item)) : []);
       } catch (caughtError) {
-        console.error('Failed to load reviews for comparison:', caughtError);
-        setReviews([]);
+        console.error('Failed to load applications for comparison:', caughtError);
+        setApplications([]);
       }
     };
 
-    void loadReviews();
+    void loadApplications();
   }, [account, walletType]);
 
   const handleCompare = async () => {
-    if (!reviewA || !reviewB || reviewA === reviewB) {
-      setError('Select two different vendor reviews to compare.');
+    if (!applicationA || !applicationB || applicationA === applicationB) {
+      setError('Select two different applications to compare.');
       return;
     }
 
     if (!account?.address) {
-      setError('Connect a wallet before comparing vendors.');
+      setError('Connect a wallet before comparing applications.');
       return;
     }
 
@@ -59,8 +60,8 @@ export default function ComparisonPanel() {
       const client = getGenlayerClient(account, walletType);
       const txHash = await client.writeContract({
         address: getContractAddress(),
-        functionName: 'compare_vendors',
-        args: [reviewA, reviewB],
+        functionName: 'compare_applications',
+        args: [applicationA, applicationB],
         value: 0n,
       });
 
@@ -71,7 +72,7 @@ export default function ComparisonPanel() {
       });
 
       if (receipt.result !== 0 && receipt.result !== 6) {
-        throw new Error(receipt.resultName || 'Vendor comparison failed during consensus');
+        throw new Error(receipt.resultName || 'Application comparison failed during consensus');
       }
 
       const comparisonsResult = await client.readContract({
@@ -90,11 +91,11 @@ export default function ComparisonPanel() {
         transactionHash: txHash,
         completedAt: new Date().toLocaleString(),
       });
-      setReviewA('');
-      setReviewB('');
+      setApplicationA('');
+      setApplicationB('');
     } catch (caughtError) {
-      console.error('Error comparing vendors:', caughtError);
-      setError(caughtError instanceof Error ? caughtError.message : 'Failed to compare vendors');
+      console.error('Error comparing applications:', caughtError);
+      setError(caughtError instanceof Error ? caughtError.message : 'Failed to compare applications');
     } finally {
       setLoading(false);
     }
@@ -102,33 +103,33 @@ export default function ComparisonPanel() {
 
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-      <section className="panel px-5 py-5 sm:px-6">
-        <div className="eyebrow">Side-by-Side Review</div>
-        <h2 className="mt-2 font-display text-2xl">Choose Between Vendors</h2>
-        <p className="mt-2 text-sm leading-6 text-text-muted">
-          Compare two completed vendor reviews to surface differentiation, repeated exposure patterns,
-          and a concise recommendation for procurement, legal, or security leadership.
+      <section className="section-card">
+        <div className="section-kicker">Committee Matchup</div>
+        <h2 className="section-title">Compare Two Applicants</h2>
+        <p className="section-copy">
+          Put two reviewed applications into the same room. The network returns separation, overlapping risks,
+          and a concise allocation recommendation you can use for shortlist meetings.
         </p>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-semibold">Vendor Review A</label>
-            <select value={reviewA} onChange={(event) => setReviewA(event.target.value)} className="field">
-              <option value="">Select a reviewed vendor...</option>
-              {reviews.map((review) => (
-                <option key={review.review_id} value={review.review_id}>
-                  {review.vendor_name} - {review.decision}
+            <label className="field-label">Application A</label>
+            <select value={applicationA} onChange={(event) => setApplicationA(event.target.value)} className="field">
+              <option value="">Select an application...</option>
+              {applications.map((application) => (
+                <option key={application.application_id} value={application.application_id}>
+                  {application.project_title} - {application.recommendation}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-semibold">Vendor Review B</label>
-            <select value={reviewB} onChange={(event) => setReviewB(event.target.value)} className="field">
-              <option value="">Select another reviewed vendor...</option>
-              {reviews.map((review) => (
-                <option key={review.review_id} value={review.review_id}>
-                  {review.vendor_name} - {review.decision}
+            <label className="field-label">Application B</label>
+            <select value={applicationB} onChange={(event) => setApplicationB(event.target.value)} className="field">
+              <option value="">Select another application...</option>
+              {applications.map((application) => (
+                <option key={application.application_id} value={application.application_id}>
+                  {application.project_title} - {application.recommendation}
                 </option>
               ))}
             </select>
@@ -137,48 +138,48 @@ export default function ComparisonPanel() {
 
         <button
           onClick={handleCompare}
-          disabled={loading || !reviewA || !reviewB}
-          className="primary-btn mt-5 w-full sm:w-auto"
+          disabled={loading || !applicationA || !applicationB}
+          className="primary-btn mt-6 w-full sm:w-auto"
         >
-          {loading ? 'Comparing vendors...' : 'Compare Vendors'}
+          {loading ? 'Comparing applicants...' : 'Run Matchup'}
         </button>
 
         {error && (
-          <div className="mt-4 rounded-[1.2rem] border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="error-banner mt-4">
             {error}
           </div>
         )}
 
         {comparison && (
-          <div className="mt-6 space-y-4">
-            <div className="rounded-[1.5rem] border border-edge bg-white/55 px-5 py-5">
-              <div className="eyebrow">Differentiation Score</div>
-              <div className="mt-3 text-5xl font-black text-accent-secondary">{comparison.differentiation_score}</div>
-              <p className="mt-4 text-sm leading-6 text-text-main">{comparison.recommendation}</p>
-              <div className="mt-4 text-xs text-text-muted">
+          <div className="mt-7 space-y-4">
+            <div className="record-card">
+              <div className="section-kicker">Separation Score</div>
+              <div className="mt-3 text-6xl font-semibold text-accent-gold">{comparison.separation_score}</div>
+              <p className="mt-4 text-sm leading-7 text-ink-main">{comparison.allocation_recommendation}</p>
+              <div className="mt-4 text-xs text-ink-dim">
                 <div>{comparison.completedAt}</div>
                 <div className="mt-1 break-all font-mono">{comparison.transactionHash}</div>
               </div>
             </div>
 
-            <div className="panel-soft px-5 py-5">
-              <div className="eyebrow">Decision Rationale</div>
-              <p className="mt-3 text-sm leading-7 text-text-main">{comparison.decision_rationale}</p>
+            <div className="section-card">
+              <div className="section-kicker">Committee Rationale</div>
+              <p className="mt-3 text-sm leading-8 text-ink-main">{comparison.rationale}</p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <div className="panel-soft px-5 py-5">
-                <div className="eyebrow">Standout Strengths</div>
-                <div className="mt-3 space-y-3 text-sm leading-6 text-text-main">
-                  {comparison.standout_strengths.map((item: string, index: number) => (
+              <div className="section-card">
+                <div className="section-kicker">Unique Advantages</div>
+                <div className="mt-4 space-y-3 text-sm leading-7 text-ink-main">
+                  {comparison.unique_advantages.map((item: string, index: number) => (
                     <p key={`${item}-${index}`}>{item}</p>
                   ))}
                 </div>
               </div>
-              <div className="panel-soft px-5 py-5">
-                <div className="eyebrow">Shared Exposures</div>
-                <div className="mt-3 space-y-3 text-sm leading-6 text-text-main">
-                  {comparison.shared_exposures.map((item: string, index: number) => (
+              <div className="section-card">
+                <div className="section-kicker">Overlapping Risks</div>
+                <div className="mt-4 space-y-3 text-sm leading-7 text-ink-main">
+                  {comparison.overlapping_risks.map((item: string, index: number) => (
                     <p key={`${item}-${index}`}>{item}</p>
                   ))}
                 </div>
@@ -189,21 +190,21 @@ export default function ComparisonPanel() {
       </section>
 
       <section className="space-y-5">
-        <div className="panel px-5 py-5 sm:px-6">
-          <div className="eyebrow">Ideal Use Cases</div>
-          <ul className="mt-4 space-y-3 text-sm leading-6 text-text-main">
-            <li>Choosing between similar SaaS vendors with different trust profiles.</li>
-            <li>Comparing the maturity of data processors before contract signature.</li>
-            <li>Pressure-testing whether a lower-cost vendor introduces hidden risk.</li>
+        <div className="section-card">
+          <div className="section-kicker">Best Moments To Use This</div>
+          <ul className="mt-5 space-y-3 text-sm leading-7 text-ink-main">
+            <li>Shortlisting two strong applicants with limited capital.</li>
+            <li>Checking whether a lower-budget team hides execution risk.</li>
+            <li>Distinguishing visionary narratives from delivery-ready plans.</li>
           </ul>
         </div>
-        <div className="panel px-5 py-5 sm:px-6">
-          <div className="eyebrow">What Comes Back</div>
-          <ul className="mt-4 space-y-3 text-sm leading-6 text-text-main">
-            <li>A differentiation score for how separated the two vendors are.</li>
-            <li>Standout strengths that support a recommendation.</li>
-            <li>Shared exposures that still need contract or evidence follow-up.</li>
-            <li>A decision rationale that can go directly into approval notes.</li>
+        <div className="section-card">
+          <div className="section-kicker">What Comes Back</div>
+          <ul className="mt-5 space-y-3 text-sm leading-7 text-ink-main">
+            <li>A separation score for how meaningfully the applicants differ.</li>
+            <li>Advantages that justify prioritizing one release over another.</li>
+            <li>Overlapping risks the committee should still treat carefully.</li>
+            <li>A rationale phrased like a usable shortlist note.</li>
           </ul>
         </div>
       </section>

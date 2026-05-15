@@ -28,7 +28,7 @@ async function main() {
         transport: http()
     });
 
-    const contractPath = path.resolve(__dirname, '../genlayer_contracts/vendorTrustLedger.py');
+    const contractPath = path.resolve(__dirname, '../genlayer_contracts/grantCouncilLedger.py');
     const contractSource = fs.readFileSync(contractPath, 'utf8');
 
     console.log(`Deploying contract from ${contractPath}...`);

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { VendorReviewFeedback } from "../types";
+import { GrantApplicationFeedback } from "../types";
 
 type ErrorState = {
   error: string;
@@ -7,14 +7,14 @@ type ErrorState = {
   clearError: () => void;
 }
 
-export const useVendorReviewStore = create<VendorReviewFeedback>(() => ({
-  trustScore: 0,
-  decision: "",
-  summary: "",
-  criticalFindings: [],
+export const useGrantApplicationStore = create<GrantApplicationFeedback>(() => ({
+  viabilityScore: 0,
+  recommendation: "",
+  thesis: "",
+  riskFlags: [],
   strengths: [],
-  followUpQuestions: [],
-  recommendedControls: [],
+  diligenceQuestions: [],
+  milestoneConditions: [],
 }));
 
 export const useErrorStore = create<ErrorState>((set) => ({

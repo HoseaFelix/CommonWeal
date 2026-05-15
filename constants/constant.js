@@ -1,15 +1,15 @@
 import { z } from 'zod';
 
-export const vendorReviewSchema = z.object({
-  trustScore: z.number(),
-  decision: z.string(),
-  summary: z.string(),
-  criticalFindings: z.array(z.object({
+export const grantApplicationSchema = z.object({
+  viabilityScore: z.number(),
+  recommendation: z.string(),
+  thesis: z.string(),
+  riskFlags: z.array(z.object({
     area: z.string(),
     severity: z.string(),
     rationale: z.string(),
   })),
   strengths: z.array(z.string()),
-  followUpQuestions: z.array(z.string()),
-  recommendedControls: z.array(z.string()),
+  diligenceQuestions: z.array(z.string()),
+  milestoneConditions: z.array(z.string()),
 });
