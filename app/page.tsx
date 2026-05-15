@@ -63,6 +63,7 @@ function HaloField() {
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('signal');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const activeTabDetails = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
 
   return (
@@ -84,11 +85,26 @@ export default function Home() {
             </div>
           </div>
 
+          <button
+            type="button"
+            className="app-navbar-menu-btn"
+            aria-label="Open navigation menu"
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((open) => !open)}
+          >
+            <span className={`hamburger-line ${mobileMenuOpen ? 'hamburger-line-top-open' : ''}`} />
+            <span className={`hamburger-line ${mobileMenuOpen ? 'hamburger-line-middle-open' : ''}`} />
+            <span className={`hamburger-line ${mobileMenuOpen ? 'hamburger-line-bottom-open' : ''}`} />
+          </button>
+
           <div className="app-navbar-links" aria-label="Primary navigation">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setMobileMenuOpen(false);
+                }}
                 className={`app-nav-link ${activeTab === tab.id ? 'app-nav-link-active' : ''}`}
               >
                 {tab.short}
@@ -100,6 +116,29 @@ export default function Home() {
             <WalletButton />
           </div>
         </nav>
+
+        {mobileMenuOpen && (
+          <div className="app-mobile-menu">
+            <div className="app-mobile-menu-links" aria-label="Mobile navigation">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`app-mobile-nav-link ${activeTab === tab.id ? 'app-mobile-nav-link-active' : ''}`}
+                >
+                  <span className="app-mobile-nav-short">{tab.short}</span>
+                  <span className="app-mobile-nav-label">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="app-mobile-menu-actions">
+              <WalletButton />
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="relative mx-auto max-w-[1540px] px-4 pb-5 pt-28 sm:px-6 sm:pt-32 lg:px-8 lg:pb-7 lg:pt-32">
