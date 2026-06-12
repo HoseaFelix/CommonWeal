@@ -1,17 +1,8 @@
-
-import { createWalletClient, http, defineChain } from 'viem';
+import { createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
+import { studionet } from 'genlayer-js/chains';
 import * as fs from 'fs';
 import * as path from 'path';
-
-// GenLayer Studio Config
-const GENLAYER_CHAIN = defineChain({
-    id: 62255,
-    name: 'GenLayer Studio',
-    network: 'genlayer-studio',
-    nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
-    rpcUrls: { default: { http: ['https://studio.genlayer.com/api'] } }
-});
 
 async function main() {
     // The deployment wallet must hold enough GEN for contract deployment.
@@ -24,7 +15,7 @@ async function main() {
     const account = privateKeyToAccount(PRIVATE_KEY as `0x${string}`);
     const client = createWalletClient({
         account,
-        chain: GENLAYER_CHAIN,
+        chain: studionet,
         transport: http()
     });
 
@@ -39,7 +30,7 @@ async function main() {
         bytecode: `0x${Buffer.from(contractSource, 'utf8').toString('hex')}`,
         args: [],
         account,
-        chain: GENLAYER_CHAIN
+        chain: studionet
     });
 
     console.log("Deployment Tx Hash:", hash);

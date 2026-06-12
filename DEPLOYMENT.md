@@ -21,7 +21,7 @@ Create `.env.local` with:
 
 ```env
 NEXT_PUBLIC_CONTRACT_ADDRESS=0x...
-NEXT_PUBLIC_GENLAYER_CHAIN_ID=62255
+NEXT_PUBLIC_GENLAYER_CHAIN_ID=61999
 NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 PRIVATE_KEY=0x...
 ```
@@ -32,7 +32,9 @@ PRIVATE_KEY=0x...
 2. Create or open a project
 3. Upload `genlayer_contracts/grantCouncilLedger.py`
 4. Deploy the contract
-5. Copy the deployed address into `.env.local`
+5. Copy the new deployed address into `.env.local`
+
+If an older Studio deployment was finalized as `invalid_contract`, you must redeploy a fresh contract after fixing the source header. Reusing the old address will keep failing.
 
 ## Run Locally
 

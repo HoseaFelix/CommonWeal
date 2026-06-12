@@ -26,7 +26,7 @@ Create `.env.local`:
 
 ```env
 NEXT_PUBLIC_CONTRACT_ADDRESS=0x...
-NEXT_PUBLIC_GENLAYER_CHAIN_ID=62255
+NEXT_PUBLIC_GENLAYER_CHAIN_ID=61999
 NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 ```
 
@@ -35,7 +35,9 @@ NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 1. Open `https://studio.genlayer.com`
 2. Upload `genlayer_contracts/grantCouncilLedger.py`
 3. Deploy the contract
-4. Copy the resulting address into `.env.local`
+4. Copy the new resulting address into `.env.local`
+
+If a previous deployment was marked `invalid_contract`, deploy again from the fixed contract source instead of reusing the old address.
 
 ## Start
 

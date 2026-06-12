@@ -35,13 +35,13 @@ Set `.env.local` before using the app:
 
 ```env
 NEXT_PUBLIC_CONTRACT_ADDRESS=0x...
-NEXT_PUBLIC_GENLAYER_CHAIN_ID=62255
+NEXT_PUBLIC_GENLAYER_CHAIN_ID=61999
 NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
 ```
 
 ## Deploy The Contract
 
-Upload `genlayer_contracts/grantCouncilLedger.py` to GenLayer Studio, deploy it, and place the new address in `.env.local`.
+Upload `genlayer_contracts/grantCouncilLedger.py` to GenLayer Studio, deploy it, and place the new address in `.env.local`. If an earlier deployment was finalized as `invalid_contract`, it cannot be recovered in place and must be redeployed from the fixed source.
 
 ## Stack
 

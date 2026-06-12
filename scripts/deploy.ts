@@ -1,16 +1,8 @@
-import { createWalletClient, createPublicClient, http, defineChain } from 'viem';
+import { createWalletClient, createPublicClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
+import { studionet } from 'genlayer-js/chains';
 import * as fs from 'fs';
 import * as path from 'path';
-
-// GenLayer Studio Config
-const GENLAYER_CHAIN = defineChain({
-    id: 62255,
-    name: 'GenLayer Studio',
-    network: 'genlayer-studio',
-    nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
-    rpcUrls: { default: { http: ['https://studio.genlayer.com/api'] } }
-});
 
 async function main() {
     console.log("Starting deployment...");
@@ -29,12 +21,12 @@ async function main() {
 
     const walletClient = createWalletClient({
         account,
-        chain: GENLAYER_CHAIN,
+        chain: studionet,
         transport: http()
     });
 
     const publicClient = createPublicClient({
-        chain: GENLAYER_CHAIN,
+        chain: studionet,
         transport: http()
     });
 
@@ -43,6 +35,7 @@ async function main() {
     const contractSource = fs.readFileSync(contractPath, 'utf8');
 
     console.log(`Reading contract from ${contractPath}...`);
+    console.log(`Deploying to ${studionet.name} (chain id ${studionet.id})...`);
 
     // 3. Deploy using sendTransaction
     const bytecode = `0x${Buffer.from(contractSource, 'utf8').toString('hex')}`;

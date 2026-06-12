@@ -1,18 +1,21 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { genlayer } from '../../constants/genlayer';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 
-// GenLayer Studio network configuration
 const GENLAYER_STUDIO_NETWORK = {
-    chainId: '0xf22f', // 62255 in decimal
-    chainName: 'GenLayer Studio',
-    rpcUrls: ['https://studio.genlayer.com/api'],
+    chainId: `0x${genlayer.id.toString(16)}`,
+    chainName: genlayer.name,
+    rpcUrls: genlayer.rpcUrls.default.http,
     nativeCurrency: {
-        name: 'GEN',
-        symbol: 'GEN',
-        decimals: 18
+        name: genlayer.nativeCurrency.name,
+        symbol: genlayer.nativeCurrency.symbol,
+        decimals: genlayer.nativeCurrency.decimals
     },
+    blockExplorerUrls: genlayer.blockExplorers?.default?.url
+        ? [genlayer.blockExplorers.default.url]
+        : undefined,
 };
 
 type WalletType = 'auto' | 'metamask' | null;
